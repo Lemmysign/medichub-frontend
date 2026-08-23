@@ -28,6 +28,7 @@ export function InstructorCourseManagePage() {
         description="Manage topics, materials and tests"
         action={<Button asChild variant="outline"><Link to="/instructor/courses">Back</Link></Button>}
       />
+      <ThumbnailUploader courseId={courseId} current={course.data!.thumbnailUrl} onDone={course.reload} />
       <Tabs defaultValue="topics">
         <TabsList>
           <TabsTrigger value="topics">Topics</TabsTrigger>
@@ -39,6 +40,45 @@ export function InstructorCourseManagePage() {
         <TabsContent value="tests" className="mt-4"><TestsTab courseId={courseId} /></TabsContent>
       </Tabs>
     </>
+  )
+}
+
+function ThumbnailUploader({ courseId, current, onDone }: { courseId: number; current: string | null; onDone: () => void }) {
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+
+  async function upload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append("file", file)
+      await api.post(`/instructor/courses/${courseId}/thumbnail`, fd, { headers: { "Content-Type": undefined } })
+      toast.success("Thumbnail updated")
+      onDone()
+    } catch (err) {
+      toast.error(errorMessage(err))
+    } finally {
+      setUploading(false)
+      if (fileRef.current) fileRef.current.value = ""
+    }
+  }
+
+  return (
+    <Card className="mb-4 flex items-center gap-4 p-4">
+      <div className="flex aspect-video w-40 items-center justify-center overflow-hidden rounded-md bg-muted">
+        {current ? <img src={current} alt="thumbnail" className="size-full object-cover" /> : <span className="text-xs text-muted-foreground">No thumbnail</span>}
+      </div>
+      <div>
+        <p className="text-sm font-medium">Course thumbnail</p>
+        <p className="text-xs text-muted-foreground">Shown on the catalog. JPG or PNG.</p>
+        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={upload} />
+        <Button className="mt-2" size="sm" variant="outline" onClick={() => fileRef.current?.click()} disabled={uploading}>
+          {uploading ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Upload className="mr-2 size-4" />} Upload
+        </Button>
+      </div>
+    </Card>
   )
 }
 

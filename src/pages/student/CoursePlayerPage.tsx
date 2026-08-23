@@ -10,6 +10,8 @@ import type {
   VideoPlaybackResponse,
 } from "@/lib/types"
 import { PageHeader, CenteredSpinner, ErrorState } from "@/components/common"
+import { CourseTests } from "@/components/CourseTests"
+import { CourseDiscussion } from "@/components/CourseDiscussion"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -217,6 +219,13 @@ export function CoursePlayerPage() {
           </div>
         </Card>
       </div>
+
+      {!gated && (
+        <div className="mt-8 grid gap-6 lg:grid-cols-2">
+          <CourseTests courseId={courseId} />
+          <CourseDiscussion courseId={courseId} />
+        </div>
+      )}
     </>
   )
 }

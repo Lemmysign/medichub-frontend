@@ -15,6 +15,7 @@ import { StudentDashboardPage } from "@/pages/student/StudentDashboardPage"
 import { BrowsePage } from "@/pages/student/BrowsePage"
 import { MyCoursesPage } from "@/pages/student/MyCoursesPage"
 import { CoursePlayerPage } from "@/pages/student/CoursePlayerPage"
+import { TestTakePage } from "@/pages/student/TestTakePage"
 import { SubscriptionPage } from "@/pages/student/SubscriptionPage"
 
 import { InstructorDashboardPage } from "@/pages/instructor/InstructorDashboardPage"
@@ -58,6 +59,7 @@ function App() {
           <Route path="/browse" element={<BrowsePage />} />
           <Route path="/student/courses" element={<MyCoursesPage />} />
           <Route path="/student/courses/:id" element={<CoursePlayerPage />} />
+          <Route path="/student/courses/:courseId/tests/:testId" element={<TestTakePage />} />
           <Route path="/student/subscription" element={<SubscriptionPage />} />
         </Route>
       </Route>
