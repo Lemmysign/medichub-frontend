@@ -202,6 +202,39 @@ export interface InitializeSubscriptionResponse {
   reference: string
 }
 
+export interface MockExamResponse {
+  id: number
+  title: string
+  description: string | null
+  passMarkPercent: number
+  durationMinutes: number | null
+  published: boolean
+  ownerName: string | null
+  questionCount: number
+}
+
+export interface MockExamSummaryResponse {
+  id: number
+  title: string
+  description: string | null
+  passMarkPercent: number
+  durationMinutes: number | null
+  questionCount: number
+  bestScorePercent: number | null
+  attemptCount: number
+}
+
+export interface MockExamStartResponse {
+  attemptId: number
+  mockExamId: number
+  title: string
+  passMarkPercent: number
+  durationMinutes: number | null
+  startedAt: string
+  expiresAt: string
+  questions: StudentQuestionResponse[]
+}
+
 export interface InstructorDashboardResponse {
   totalCourses: number
   totalStudentsEnrolled: number

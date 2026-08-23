@@ -17,6 +17,10 @@ import { MyCoursesPage } from "@/pages/student/MyCoursesPage"
 import { CoursePlayerPage } from "@/pages/student/CoursePlayerPage"
 import { TestTakePage } from "@/pages/student/TestTakePage"
 import { SubscriptionPage } from "@/pages/student/SubscriptionPage"
+import { StudentMockExamsPage } from "@/pages/student/StudentMockExamsPage"
+import { MockExamRunPage } from "@/pages/student/MockExamRunPage"
+import { MockExamsListPage } from "@/pages/mock/MockExamsListPage"
+import { MockExamManagePage } from "@/pages/mock/MockExamManagePage"
 
 import { InstructorDashboardPage } from "@/pages/instructor/InstructorDashboardPage"
 import { InstructorCoursesPage } from "@/pages/instructor/InstructorCoursesPage"
@@ -60,6 +64,8 @@ function App() {
           <Route path="/student/courses" element={<MyCoursesPage />} />
           <Route path="/student/courses/:id" element={<CoursePlayerPage />} />
           <Route path="/student/courses/:courseId/tests/:testId" element={<TestTakePage />} />
+          <Route path="/student/mock-exams" element={<StudentMockExamsPage />} />
+          <Route path="/student/mock-exams/:id" element={<MockExamRunPage />} />
           <Route path="/student/subscription" element={<SubscriptionPage />} />
         </Route>
       </Route>
@@ -70,6 +76,8 @@ function App() {
           <Route path="/instructor" element={<InstructorDashboardPage />} />
           <Route path="/instructor/courses" element={<InstructorCoursesPage />} />
           <Route path="/instructor/courses/:id" element={<InstructorCourseManagePage />} />
+          <Route path="/instructor/mock-exams" element={<MockExamsListPage />} />
+          <Route path="/instructor/mock-exams/:id" element={<MockExamManagePage />} />
           <Route path="/instructor/questions" element={<InstructorQuestionsPage />} />
         </Route>
       </Route>
@@ -79,6 +87,8 @@ function App() {
         <Route element={<AppLayout />}>
           <Route path="/admin" element={<AdminDashboardPage />} />
           <Route path="/admin/users" element={<AdminUsersPage />} />
+          <Route path="/admin/mock-exams" element={<MockExamsListPage />} />
+          <Route path="/admin/mock-exams/:id" element={<MockExamManagePage />} />
           <Route path="/admin/plan" element={<AdminPlanPage />} />
           <Route path="/admin/settings" element={<AdminSettingsPage />} />
         </Route>
