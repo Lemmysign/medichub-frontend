@@ -3,12 +3,27 @@ import { Link, useParams } from "react-router-dom"
 import { toast } from "sonner"
 import { api, errorMessage } from "@/lib/api"
 import { useApi } from "@/hooks/useApi"
-import type { AttemptDetailResponse, AttemptResponse, PagedResponse, StudentTestResponse } from "@/lib/types"
+import type {
+  AttemptDetailResponse,
+  AttemptResponse,
+  CheckAnswerResponse,
+  PagedResponse,
+  StudentQuestionResponse,
+  StudentTestResponse,
+} from "@/lib/types"
 import { PageHeader, CenteredSpinner, ErrorState } from "@/components/common"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle2, XCircle, Loader2 } from "lucide-react"
+import { CheckCircle2, XCircle, Loader2, Lightbulb } from "lucide-react"
+
+/** Per-question reveal state: which option is correct, what the student picked, and the explanation. */
+interface Reveal {
+  correctOptionId: number | null
+  selectedOptionId: number | null
+  correct: boolean
+  explanation: string | null
+}
 
 export function TestTakePage() {
   const { courseId, testId } = useParams()
@@ -25,8 +40,27 @@ export function TestTakePage() {
   )
 
   const [answers, setAnswers] = useState<Record<number, number>>({})
+  const [checks, setChecks] = useState<Record<number, CheckAnswerResponse>>({}) // immediate-mode reveals
   const [result, setResult] = useState<AttemptDetailResponse | null>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  const immediate = test.data?.feedbackMode === "IMMEDIATE"
+
+  async function pick(q: StudentQuestionResponse, optionId: number) {
+    if (result || checks[q.id]) return // locked once graded/revealed
+    setAnswers((prev) => ({ ...prev, [q.id]: optionId }))
+    if (immediate) {
+      try {
+        const res = await api.post<CheckAnswerResponse>(
+          `/student/courses/${courseId}/tests/${testId}/questions/${q.id}/check`,
+          { selectedOptionId: optionId },
+        )
+        setChecks((prev) => ({ ...prev, [q.id]: res.data }))
+      } catch (e) {
+        toast.error(errorMessage(e))
+      }
+    }
+  }
 
   async function submit() {
     setSubmitting(true)
@@ -48,16 +82,33 @@ export function TestTakePage() {
     }
   }
 
+  function retake() {
+    setResult(null)
+    setAnswers({})
+    setChecks({})
+  }
+
   if (test.loading) return <CenteredSpinner />
   if (test.error) return <ErrorState message={test.error} />
   const t = test.data!
-  const correctById = new Map(result?.answers.map((a) => [a.questionId, a.correct]))
+  const resultByQuestion = new Map(result?.answers.map((a) => [a.questionId, a]))
+
+  /** Resolve reveal info for a question from the post-submit result or the immediate check. */
+  function revealFor(qid: number): Reveal | null {
+    const r = resultByQuestion.get(qid)
+    if (r) return { correctOptionId: r.correctOptionId, selectedOptionId: r.selectedOptionId, correct: r.correct, explanation: r.explanation }
+    const c = checks[qid]
+    if (c) return { correctOptionId: c.correctOptionId, selectedOptionId: answers[qid] ?? null, correct: c.correct, explanation: c.explanation }
+    return null
+  }
+
+  const answeredCount = Object.keys(answers).length
 
   return (
     <>
       <PageHeader
         title={t.title}
-        description={`${t.questions.length} questions • pass mark ${t.passMarkPercent}%`}
+        description={`${t.questions.length} questions • pass mark ${t.passMarkPercent}% • ${immediate ? "study mode" : "exam mode"}`}
         action={<Button asChild variant="outline"><Link to={`/student/courses/${courseId}`}>Back to course</Link></Button>}
       />
 
@@ -75,50 +126,65 @@ export function TestTakePage() {
 
       <div className="space-y-4">
         {t.questions.map((q, i) => {
-          const graded = correctById.has(q.id)
-          const wasCorrect = correctById.get(q.id)
+          const reveal = revealFor(q.id)
+          const locked = !!result || !!checks[q.id]
           return (
             <Card key={q.id} className="p-5">
               <div className="flex items-start justify-between gap-3">
                 <p className="font-medium">
                   <span className="text-muted-foreground">{i + 1}.</span> {q.text}
                 </p>
-                {graded && (
-                  <Badge variant={wasCorrect ? "default" : "destructive"}>{wasCorrect ? "Correct" : "Wrong"}</Badge>
+                {reveal && (
+                  <Badge variant={reveal.correct ? "default" : "destructive"}>{reveal.correct ? "Correct" : "Wrong"}</Badge>
                 )}
               </div>
               <div className="mt-3 space-y-2">
-                {q.options.map((o) => (
-                  <label
-                    key={o.id}
-                    className={
-                      "flex cursor-pointer items-center gap-3 rounded-md border p-3 text-sm transition-colors " +
-                      (answers[q.id] === o.id ? "border-primary bg-primary/5" : "hover:bg-muted")
-                    }
-                  >
-                    <input
-                      type="radio"
-                      name={`q-${q.id}`}
-                      checked={answers[q.id] === o.id}
-                      disabled={!!result}
-                      onChange={() => setAnswers({ ...answers, [q.id]: o.id })}
-                      className="size-4"
-                    />
-                    {o.text}
-                  </label>
-                ))}
+                {q.options.map((o) => {
+                  const selected = answers[q.id] === o.id
+                  const isCorrect = reveal && reveal.correctOptionId === o.id
+                  const isWrongPick = reveal && !reveal.correct && reveal.selectedOptionId === o.id
+                  let cls = "hover:bg-muted"
+                  if (isCorrect) cls = "border-success bg-success/10"
+                  else if (isWrongPick) cls = "border-destructive bg-destructive/10"
+                  else if (selected) cls = "border-primary bg-primary/5"
+                  return (
+                    <label
+                      key={o.id}
+                      className={"flex items-center gap-3 rounded-md border p-3 text-sm transition-colors " + (locked ? "cursor-default " : "cursor-pointer ") + cls}
+                    >
+                      <input
+                        type="radio"
+                        name={`q-${q.id}`}
+                        checked={selected}
+                        disabled={locked}
+                        onChange={() => pick(q, o.id)}
+                        className="size-4 accent-primary"
+                      />
+                      <span className="flex-1">{o.text}</span>
+                      {isCorrect && <CheckCircle2 className="size-4 text-success" />}
+                      {isWrongPick && <XCircle className="size-4 text-destructive" />}
+                    </label>
+                  )
+                })}
               </div>
+              {/* Study mode reveals the explanation only when the pick was wrong; the results review shows it for any graded question. */}
+              {reveal && reveal.explanation && (immediate ? !reveal.correct || !!result : true) && (
+                <div className="mt-3 flex gap-2 rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-sm">
+                  <Lightbulb className="mt-0.5 size-4 shrink-0 text-amber-500" />
+                  <p><span className="font-medium">Explanation: </span>{reveal.explanation}</p>
+                </div>
+              )}
             </Card>
           )
         })}
       </div>
 
       {!result ? (
-        <Button className="mt-6" onClick={submit} disabled={submitting}>
+        <Button className="mt-6" onClick={submit} disabled={submitting || answeredCount === 0}>
           {submitting && <Loader2 className="mr-2 size-4 animate-spin" />} Submit test
         </Button>
       ) : (
-        <Button className="mt-6" variant="outline" onClick={() => { setResult(null); setAnswers({}) }}>
+        <Button className="mt-6" variant="outline" onClick={retake}>
           Retake test
         </Button>
       )}

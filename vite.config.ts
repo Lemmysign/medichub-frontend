@@ -12,7 +12,9 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5173,
+    // Must match the backend's app.frontend.url (default http://localhost:5174) for CORS.
+    port: 5174,
+    strictPort: true,
     // Proxy API calls to the Spring Boot backend during local dev.
     proxy: {
       '/api': 'http://localhost:9091',

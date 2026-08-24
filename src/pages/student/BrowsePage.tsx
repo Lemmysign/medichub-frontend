@@ -4,8 +4,8 @@ import { PageHeader } from "@/components/common"
 export function BrowsePage() {
   return (
     <>
-      <PageHeader title="Browse courses" description="Everything included with your subscription" />
-      <CourseCatalog />
+      <PageHeader title="Browse Courses" description="All courses included with your subscription — explore and enrol instantly." />
+      <CourseCatalog showSearch hrefFor={(id) => `/student/courses/${id}`} />
     </>
   )
 }

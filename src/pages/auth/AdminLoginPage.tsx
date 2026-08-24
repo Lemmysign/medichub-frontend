@@ -1,7 +1,7 @@
 import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
-import { useAuth, homePathFor } from "@/context/AuthContext"
+import { useAuth } from "@/context/AuthContext"
 import { errorMessage } from "@/lib/api"
 import { AuthShell } from "./AuthShell"
 import { Button } from "@/components/ui/button"
@@ -9,8 +9,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ArrowRight, Eye, EyeOff, Loader2 } from "lucide-react"
 
-export function LoginPage() {
-  const { login } = useAuth()
+/** Separate admin portal (no self-signup). Only ADMIN accounts may proceed. */
+export function AdminLoginPage() {
+  const { login, logout } = useAuth()
   const navigate = useNavigate()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -22,8 +23,13 @@ export function LoginPage() {
     setLoading(true)
     try {
       const user = await login(email.trim(), password)
+      if (user.role !== "ADMIN") {
+        await logout()
+        toast.error("This account is not an administrator")
+        return
+      }
       toast.success(`Welcome back, ${user.fullName.split(" ")[0]}`)
-      navigate(homePathFor(user.role), { replace: true })
+      navigate("/admin", { replace: true })
     } catch (err) {
       toast.error(errorMessage(err, "Login failed"))
     } finally {
@@ -32,36 +38,14 @@ export function LoginPage() {
   }
 
   return (
-    <AuthShell
-      title="Welcome back"
-      subtitle="Sign in to your account to continue studying."
-      quote={{
-        text: "The mock exams alone are worth the subscription. Felt like I'd sat the real exam twice before exam day.",
-        author: "Dr. Chisom Obi",
-        meta: "MDCN Licensing, First attempt",
-        initials: "CO",
-      }}
-      footer={
-        <>
-          Don&apos;t have an account?{" "}
-          <Link to="/register" className="font-700 text-primary hover:underline">
-            Sign up
-          </Link>
-        </>
-      }
-    >
+    <AuthShell title="Admin sign in" subtitle="Access the MedicHub Academy back office." variant="admin">
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="email">Email address</Label>
-          <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
+          <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@medichubacademy.com" />
         </div>
         <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="password">Password</Label>
-            <Link to="/forgot-password" className="font-600 text-xs text-primary hover:underline">
-              Forgot password?
-            </Link>
-          </div>
+          <Label htmlFor="password">Password</Label>
           <div className="relative">
             <Input
               id="password"

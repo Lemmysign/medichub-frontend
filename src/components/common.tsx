@@ -2,22 +2,41 @@ import type { ComponentType, ReactNode } from "react"
 import { Loader2, type LucideProps } from "lucide-react"
 import { Card } from "@/components/ui/card"
 
+type StatAccent = "primary" | "success" | "warning" | "accent" | "destructive"
+
+const STAT_ACCENT: Record<StatAccent, string> = {
+  primary: "bg-primary/10 text-primary",
+  success: "bg-success/10 text-success",
+  warning: "bg-warning/10 text-warning",
+  accent: "bg-accent text-accent-foreground",
+  destructive: "bg-destructive/10 text-destructive",
+}
+
 export function StatCard({
   label,
   value,
   icon: Icon,
+  sub,
+  accent = "primary",
 }: {
   label: string
   value: ReactNode
   icon?: ComponentType<LucideProps>
+  /** Optional small caption under the label (e.g. "+2 this month"). */
+  sub?: ReactNode
+  /** Colour of the icon chip. */
+  accent?: StatAccent
 }) {
   return (
-    <Card className="p-5">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{label}</p>
-        {Icon && <Icon className="size-4 text-primary" />}
-      </div>
-      <p className="mt-2 text-3xl font-semibold tracking-tight">{value}</p>
+    <Card className="p-4">
+      {Icon && (
+        <div className={"mb-3 flex size-9 items-center justify-center rounded-md " + STAT_ACCENT[accent]}>
+          <Icon className="size-[18px]" />
+        </div>
+      )}
+      <p className="tabular font-800 text-2xl leading-none">{value}</p>
+      <p className="font-500 mt-1.5 text-xs text-muted-foreground">{label}</p>
+      {sub && <p className="mt-0.5 text-[10px] text-muted-foreground/80">{sub}</p>}
     </Card>
   )
 }

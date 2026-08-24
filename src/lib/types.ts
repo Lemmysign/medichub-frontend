@@ -3,6 +3,9 @@
 export type Role = "STUDENT" | "INSTRUCTOR" | "ADMIN"
 export type QuestionType = "SINGLE_CHOICE" | "MULTIPLE_CHOICE" | "TRUE_FALSE"
 export type SubscriptionStatus = "PENDING" | "ACTIVE" | "EXPIRED" | "CANCELLED"
+/** IMMEDIATE = reveal the answer + explanation as the student answers (study mode).
+ *  ON_SUBMISSION = reveal only after the whole test/exam is submitted (exam mode). */
+export type FeedbackMode = "IMMEDIATE" | "ON_SUBMISSION"
 
 export interface UserResponse {
   id: number
@@ -119,6 +122,7 @@ export interface QuestionResponse {
   id: number
   text: string
   type: QuestionType
+  explanation: string | null
   orderIndex: number
   options: OptionResponse[]
 }
@@ -127,6 +131,7 @@ export interface TestResponse {
   courseId: number
   title: string
   passMarkPercent: number
+  feedbackMode: FeedbackMode
   questionCount: number
 }
 export interface StudentOptionResponse {
@@ -146,12 +151,24 @@ export interface StudentTestResponse {
   courseId: number
   title: string
   passMarkPercent: number
+  feedbackMode: FeedbackMode
   questions: StudentQuestionResponse[]
+}
+/** Immediate-mode per-question reveal. `timerPaused`/`expiresAt` only matter for timed mocks. */
+export interface CheckAnswerResponse {
+  questionId: number
+  correct: boolean
+  correctOptionId: number | null
+  explanation: string | null
+  timerPaused: boolean
+  expiresAt: string | null
 }
 export interface AttemptAnswerResponse {
   questionId: number
   questionText: string
   selectedOptionId: number | null
+  correctOptionId: number | null
+  explanation: string | null
   correct: boolean
 }
 export interface AttemptResponse {
@@ -173,7 +190,9 @@ export interface CommentResponse {
   authorName: string
   authorRole: Role
   courseId: number
+  courseTitle: string | null
   topicId: number | null
+  topicTitle: string | null
   parentId: number | null
   answered: boolean
   createdAt: string
@@ -209,6 +228,7 @@ export interface MockExamResponse {
   passMarkPercent: number
   durationMinutes: number | null
   published: boolean
+  feedbackMode: FeedbackMode
   ownerName: string | null
   questionCount: number
 }
@@ -230,8 +250,9 @@ export interface MockExamStartResponse {
   title: string
   passMarkPercent: number
   durationMinutes: number | null
+  feedbackMode: FeedbackMode
   startedAt: string
-  expiresAt: string
+  expiresAt: string | null
   questions: StudentQuestionResponse[]
 }
 
@@ -252,6 +273,17 @@ export interface AdminMetricsResponse {
   totalStudents: number
   totalTests: number
   activeSubscriptions: number
+}
+export interface RevenueBucket {
+  periodStart: string
+  amountKobo: number
+}
+export interface RevenueReportResponse {
+  granularity: string
+  from: string
+  to: string
+  totalKobo: number
+  buckets: RevenueBucket[]
 }
 
 export interface ApiError {

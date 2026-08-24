@@ -4,6 +4,7 @@ import { AppLayout } from "@/components/layout/AppLayout"
 import { PublicLayout } from "@/components/layout/PublicLayout"
 
 import { LoginPage } from "@/pages/auth/LoginPage"
+import { AdminLoginPage } from "@/pages/auth/AdminLoginPage"
 import { RegisterPage } from "@/pages/auth/RegisterPage"
 import { ForgotPasswordPage } from "@/pages/auth/ForgotPasswordPage"
 import { ResetPasswordPage } from "@/pages/auth/ResetPasswordPage"
@@ -39,6 +40,7 @@ function App() {
     <Routes>
       {/* Auth (no chrome) */}
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/admin/login" element={<AdminLoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
