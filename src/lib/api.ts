@@ -88,3 +88,8 @@ export function errorMessage(err: unknown, fallback = "Something went wrong"): s
   }
   return data?.message || ax.message || fallback
 }
+
+/** The machine-readable `error` code from an API error (e.g. "EMAIL_NOT_VERIFIED"), if any. */
+export function errorCode(err: unknown): string | undefined {
+  return (err as AxiosError<ApiError>).response?.data?.error
+}

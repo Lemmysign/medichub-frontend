@@ -18,6 +18,7 @@ const TITLES: [string, string][] = [
   ["/instructor/questions", "Q&A Inbox"],
   ["/instructor", "Dashboard"],
   ["/admin/users", "Accounts"],
+  ["/admin/approvals", "Instructor Approvals"],
   ["/admin/mock-exams", "Mock Exams"],
   ["/admin/plan", "Subscription Plan"],
   ["/admin/settings", "Platform Settings"],

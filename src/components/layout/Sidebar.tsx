@@ -2,7 +2,7 @@ import { NavLink } from "react-router-dom"
 import {
   LayoutDashboard, BookOpen, Library, ClipboardList, CreditCard,
   Settings, MessageSquare, Users, ChevronLeft, ChevronRight,
-  Activity, LogOut, Stethoscope, History, Tags,
+  Activity, LogOut, Stethoscope, History, Tags, UserCheck,
 } from "lucide-react"
 import type { Role } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -37,6 +37,7 @@ function navItems(role: Role): NavItem[] {
   return [
     { to: "/admin", label: "Dashboard", icon: <LayoutDashboard size={18} />, end: true },
     { to: "/admin/users", label: "Accounts", icon: <Users size={18} /> },
+    { to: "/admin/approvals", label: "Approvals", icon: <UserCheck size={18} /> },
     { to: "/admin/mock-exams", label: "MCQs", icon: <ClipboardList size={18} /> },
     { to: "/admin/recalls", label: "Recalls", icon: <History size={18} /> },
     { to: "/admin/subjects", label: "Subjects", icon: <Tags size={18} /> },

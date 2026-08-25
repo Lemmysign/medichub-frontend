@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { toast } from "sonner"
-import { useAuth, homePathFor } from "@/context/AuthContext"
+import { useAuth } from "@/context/AuthContext"
 import { errorMessage } from "@/lib/api"
 import type { Role } from "@/lib/types"
 import { AuthShell } from "./AuthShell"
@@ -27,15 +27,16 @@ export function RegisterPage() {
     e.preventDefault()
     setLoading(true)
     try {
-      const user = await register({
+      const email = form.email.trim()
+      await register({
         fullName: form.fullName.trim(),
-        email: form.email.trim(),
+        email,
         phone: form.phone.trim() || undefined,
         password: form.password,
         role,
       })
-      toast.success("Account created")
-      navigate(homePathFor(user.role), { replace: true })
+      toast.success("Check your email for a 6-digit code")
+      navigate("/verify-email", { state: { email }, replace: true })
     } catch (err) {
       toast.error(errorMessage(err, "Registration failed"))
     } finally {

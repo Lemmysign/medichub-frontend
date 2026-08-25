@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
 import { api, tokenStore } from "@/lib/api"
-import type { AuthResponse, Role, UserResponse } from "@/lib/types"
+import type { AuthResponse, OtpChallengeResponse, Role, UserResponse, VerifyOtpResponse } from "@/lib/types"
 
 interface RegisterPayload {
   fullName: string
@@ -14,7 +14,11 @@ interface AuthState {
   user: UserResponse | null
   loading: boolean
   login: (email: string, password: string) => Promise<UserResponse>
-  register: (payload: RegisterPayload) => Promise<UserResponse>
+  /** Creates the account and emails an OTP — does NOT log in. */
+  register: (payload: RegisterPayload) => Promise<OtpChallengeResponse>
+  /** Confirms the OTP; on a logged-in result the session is applied and the user returned. */
+  verifyOtp: (email: string, code: string) => Promise<VerifyOtpResponse>
+  resendOtp: (email: string) => Promise<void>
   logout: () => Promise<void>
   setUser: (u: UserResponse) => void
 }
@@ -43,18 +47,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     bootstrap()
   }, [])
 
+  function applyAuth(auth: AuthResponse) {
+    tokenStore.set(auth.accessToken, auth.refreshToken)
+    setUser(auth.user)
+    return auth.user
+  }
+
   async function login(email: string, password: string) {
     const res = await api.post<AuthResponse>("/auth/login", { email, password })
-    tokenStore.set(res.data.accessToken, res.data.refreshToken)
-    setUser(res.data.user)
-    return res.data.user
+    return applyAuth(res.data)
   }
 
   async function register(payload: RegisterPayload) {
-    const res = await api.post<AuthResponse>("/auth/register", payload)
-    tokenStore.set(res.data.accessToken, res.data.refreshToken)
-    setUser(res.data.user)
-    return res.data.user
+    const res = await api.post<OtpChallengeResponse>("/auth/register", payload)
+    return res.data
+  }
+
+  async function verifyOtp(email: string, code: string) {
+    const res = await api.post<VerifyOtpResponse>("/auth/verify-otp", { email, code })
+    if (res.data.auth) applyAuth(res.data.auth)
+    return res.data
+  }
+
+  async function resendOtp(email: string) {
+    await api.post("/auth/resend-otp", { email })
   }
 
   async function logout() {
@@ -71,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, setUser }}>
+    <AuthContext.Provider value={{ user, loading, login, register, verifyOtp, resendOtp, logout, setUser }}>
       {children}
     </AuthContext.Provider>
   )

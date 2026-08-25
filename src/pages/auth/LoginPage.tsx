@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Link, Navigate, useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { useAuth, homePathFor } from "@/context/AuthContext"
-import { errorMessage } from "@/lib/api"
+import { errorMessage, errorCode } from "@/lib/api"
 import { AuthShell } from "./AuthShell"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,7 +28,15 @@ export function LoginPage() {
       toast.success(`Welcome back, ${user.fullName.split(" ")[0]}`)
       navigate(homePathFor(user.role), { replace: true })
     } catch (err) {
-      toast.error(errorMessage(err, "Login failed"))
+      const code = errorCode(err)
+      if (code === "EMAIL_NOT_VERIFIED") {
+        toast.message("Please verify your email to continue")
+        navigate("/verify-email", { state: { email: email.trim() } })
+      } else if (code === "INSTRUCTOR_PENDING") {
+        navigate("/pending-approval")
+      } else {
+        toast.error(errorMessage(err, "Login failed"))
+      }
     } finally {
       setLoading(false)
     }

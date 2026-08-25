@@ -26,6 +26,28 @@ export interface AuthResponse {
   user: UserResponse
 }
 
+/** Register/resend result — an unverified account; the SPA shows the OTP screen. */
+export interface OtpChallengeResponse {
+  email: string
+  message: string
+}
+
+/** Verify-OTP result — either logged in (auth set) or a verified instructor awaiting approval. */
+export interface VerifyOtpResponse {
+  pendingApproval: boolean
+  auth: AuthResponse | null
+}
+
+/** An instructor awaiting admin approval, for the admin approvals queue. */
+export interface PendingInstructorResponse {
+  id: number
+  fullName: string
+  email: string
+  phone: string | null
+  emailVerified: boolean
+  registeredAt: string
+}
+
 export interface PagedResponse<T> {
   content: T[]
   page: number

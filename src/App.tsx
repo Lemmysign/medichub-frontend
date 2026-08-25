@@ -5,6 +5,8 @@ import { AppLayout } from "@/components/layout/AppLayout"
 import { LoginPage } from "@/pages/auth/LoginPage"
 import { AdminLoginPage } from "@/pages/auth/AdminLoginPage"
 import { RegisterPage } from "@/pages/auth/RegisterPage"
+import { VerifyEmailPage } from "@/pages/auth/VerifyEmailPage"
+import { PendingApprovalPage } from "@/pages/auth/PendingApprovalPage"
 import { ForgotPasswordPage } from "@/pages/auth/ForgotPasswordPage"
 import { ResetPasswordPage } from "@/pages/auth/ResetPasswordPage"
 
@@ -29,6 +31,7 @@ import { InstructorQuestionsPage } from "@/pages/instructor/InstructorQuestionsP
 
 import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage"
 import { AdminUsersPage } from "@/pages/admin/AdminUsersPage"
+import { AdminApprovalsPage } from "@/pages/admin/AdminApprovalsPage"
 import { AdminSubjectsPage } from "@/pages/admin/AdminSubjectsPage"
 import { AdminPlanPage } from "@/pages/admin/AdminPlanPage"
 import { AdminSettingsPage } from "@/pages/admin/AdminSettingsPage"
@@ -42,6 +45,8 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/admin/login" element={<AdminLoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <Route path="/pending-approval" element={<PendingApprovalPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
 
@@ -91,6 +96,7 @@ function App() {
         <Route element={<AppLayout />}>
           <Route path="/admin" element={<AdminDashboardPage />} />
           <Route path="/admin/users" element={<AdminUsersPage />} />
+          <Route path="/admin/approvals" element={<AdminApprovalsPage />} />
           <Route path="/admin/mock-exams" element={<MockExamsListPage />} />
           <Route path="/admin/mock-exams/:id" element={<MockExamManagePage />} />
           <Route path="/admin/recalls" element={<RecallsListPage basePath="/admin/recalls" />} />
