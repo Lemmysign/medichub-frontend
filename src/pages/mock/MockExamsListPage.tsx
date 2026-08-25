@@ -3,6 +3,7 @@ import { Link } from "react-router-dom"
 import { toast } from "sonner"
 import { api, errorMessage } from "@/lib/api"
 import { useApi } from "@/hooks/useApi"
+import { useSubjects } from "@/hooks/useSubjects"
 import type { FeedbackMode, MockExamResponse, PagedResponse } from "@/lib/types"
 import { PageHeader, CenteredSpinner, ErrorState, EmptyState } from "@/components/common"
 import { Pagination } from "@/components/ui/pagination"
@@ -13,15 +14,17 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
-import { Clock, ClipboardList, FileQuestion, Loader2, Plus, Target, Trash2 } from "lucide-react"
+import { Clock, ClipboardList, FileQuestion, Loader2, Plus, Tag, Target, Trash2 } from "lucide-react"
 
 export function MockExamsListPage() {
+  const subjects = useSubjects()
+  const [subjectId, setSubjectId] = useState<number | null>(null)
   const [page, setPage] = useState(0)
   const { data, loading, error, reload } = useApi(
-    () => api.get<PagedResponse<MockExamResponse>>("/mock-exams", { params: { page, size: 12 } }).then((r) => r.data),
-    [page],
+    () => api.get<PagedResponse<MockExamResponse>>("/mock-exams", { params: { page, size: 15, subjectId: subjectId ?? undefined } }).then((r) => r.data),
+    [page, subjectId],
   )
-  const emptyForm = { title: "", description: "", passMarkPercent: 50, timed: true, durationMinutes: 30, feedbackMode: "ON_SUBMISSION" as FeedbackMode }
+  const emptyForm = { title: "", description: "", passMarkPercent: 50, timed: true, durationMinutes: 30, feedbackMode: "ON_SUBMISSION" as FeedbackMode, subjectId: 0 }
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
@@ -35,8 +38,9 @@ export function MockExamsListPage() {
         passMarkPercent: form.passMarkPercent,
         durationMinutes: form.timed ? form.durationMinutes : null,
         feedbackMode: form.feedbackMode,
+        subjectId: form.subjectId,
       })
-      toast.success("Mock exam created")
+      toast.success("MCQ exam created")
       setOpen(false)
       setForm(emptyForm)
       reload()
@@ -55,15 +59,26 @@ export function MockExamsListPage() {
   return (
     <>
       <PageHeader
-        title="Mock Exams"
-        description="Standalone, timed exams for subscribers — not tied to any course"
+        title="MCQs"
+        description="Subject-tagged practice exams for subscribers — auto-graded, timed or self-paced"
         action={
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button><Plus className="mr-2 size-4" /> New mock exam</Button></DialogTrigger>
+            <DialogTrigger asChild><Button><Plus className="mr-2 size-4" /> New MCQ exam</Button></DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle>Create mock exam</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>Create MCQ exam</DialogTitle></DialogHeader>
               <div className="space-y-4">
                 <div className="space-y-2"><Label>Title</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
+                <div className="space-y-2">
+                  <Label>Subject</Label>
+                  <select
+                    value={form.subjectId}
+                    onChange={(e) => setForm({ ...form, subjectId: Number(e.target.value) })}
+                    className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs"
+                  >
+                    <option value={0} disabled>Select subject…</option>
+                    {(subjects.data ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  </select>
+                </div>
                 <div className="space-y-2"><Label>Description</Label><Textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2"><Label>Pass mark %</Label><Input type="number" min={0} max={100} value={form.passMarkPercent} onChange={(e) => setForm({ ...form, passMarkPercent: Number(e.target.value) })} /></div>
@@ -89,7 +104,7 @@ export function MockExamsListPage() {
                 </div>
               </div>
               <DialogFooter>
-                <Button onClick={create} disabled={saving || !form.title.trim()}>
+                <Button onClick={create} disabled={saving || !form.title.trim() || !form.subjectId}>
                   {saving && <Loader2 className="mr-2 size-4 animate-spin" />} Create
                 </Button>
               </DialogFooter>
@@ -97,8 +112,11 @@ export function MockExamsListPage() {
           </Dialog>
         }
       />
+
+      <SubjectFilter subjects={subjects.data ?? []} value={subjectId} onChange={(v) => { setSubjectId(v); setPage(0) }} />
+
       {loading ? <CenteredSpinner /> : error ? <ErrorState message={error} /> : !data || data.content.length === 0 ? (
-        <EmptyState title="No mock exams yet" description="Create one and add questions, then publish it for subscribers." />
+        <EmptyState title="No MCQ exams yet" description="Create one and add questions, then publish it for subscribers." />
       ) : (
         <div className="grid gap-5 sm:grid-cols-2">
           {data.content.map((m) => (
@@ -115,7 +133,14 @@ export function MockExamsListPage() {
                       {m.published ? "Live" : "Draft"}
                     </span>
                   </div>
-                  {m.ownerName && <p className="mt-0.5 text-xs text-muted-foreground">by {m.ownerName}</p>}
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    {m.subjectName && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-[10px] font-600 text-accent-foreground">
+                        <Tag className="size-3" /> {m.subjectName}
+                      </span>
+                    )}
+                    {m.ownerName && <span className="text-xs text-muted-foreground">by {m.ownerName}</span>}
+                  </div>
                 </div>
               </div>
 
@@ -142,5 +167,29 @@ export function MockExamsListPage() {
       )}
       {data && <Pagination page={data.page} totalPages={data.totalPages} onPage={setPage} />}
     </>
+  )
+}
+
+/** Subject dropdown filter shared by the MCQ and student MCQ lists. */
+export function SubjectFilter({
+  subjects, value, onChange,
+}: {
+  subjects: { id: number; name: string }[]
+  value: number | null
+  onChange: (v: number | null) => void
+}) {
+  if (subjects.length === 0) return null
+  return (
+    <div className="mb-5 max-w-xs">
+      <label className="mb-1 flex items-center gap-1 text-xs font-600 text-muted-foreground"><Tag className="size-3.5" /> Subject</label>
+      <select
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)}
+        className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs focus:outline-none focus:ring-2 focus:ring-ring/40"
+      >
+        <option value="">All subjects</option>
+        {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+      </select>
+    </div>
   )
 }

@@ -12,10 +12,10 @@ import { Switch } from "@/components/ui/switch"
 import { Pagination } from "@/components/ui/pagination"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
-const ROLES: (Role | "ALL")[] = ["ALL", "STUDENT", "INSTRUCTOR", "ADMIN"]
 type StatusFilter = "ALL" | "ACTIVE" | "DISABLED"
-const STATUSES: StatusFilter[] = ["ALL", "ACTIVE", "DISABLED"]
 const PAGE_SIZE = 20
+const selectCls =
+  "h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs focus:outline-none focus:ring-2 focus:ring-ring/40"
 
 export function AdminUsersPage() {
   const [role, setRole] = useState<Role | "ALL">("ALL")
@@ -60,28 +60,17 @@ export function AdminUsersPage() {
       <PageHeader title="Accounts" description="Manage students and instructors" />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="flex gap-1 rounded-lg bg-muted p-1">
-          {ROLES.map((r) => (
-            <button
-              key={r}
-              onClick={() => setRoleF(r)}
-              className={"font-500 rounded-md px-3 py-1.5 text-sm transition-colors " + (role === r ? "bg-card shadow-sm" : "text-muted-foreground hover:text-foreground")}
-            >
-              {r === "ALL" ? "All roles" : r.charAt(0) + r.slice(1).toLowerCase()}
-            </button>
-          ))}
-        </div>
-        <div className="flex gap-1 rounded-lg bg-muted p-1">
-          {STATUSES.map((s) => (
-            <button
-              key={s}
-              onClick={() => setStatusF(s)}
-              className={"font-500 rounded-md px-3 py-1.5 text-sm transition-colors " + (status === s ? "bg-card shadow-sm" : "text-muted-foreground hover:text-foreground")}
-            >
-              {s === "ALL" ? "All status" : s.charAt(0) + s.slice(1).toLowerCase()}
-            </button>
-          ))}
-        </div>
+        <select value={role} onChange={(e) => setRoleF(e.target.value as Role | "ALL")} className={selectCls} aria-label="Filter by role">
+          <option value="ALL">All roles</option>
+          <option value="STUDENT">Student</option>
+          <option value="INSTRUCTOR">Instructor</option>
+          <option value="ADMIN">Admin</option>
+        </select>
+        <select value={status} onChange={(e) => setStatusF(e.target.value as StatusFilter)} className={selectCls} aria-label="Filter by status">
+          <option value="ALL">All status</option>
+          <option value="ACTIVE">Active</option>
+          <option value="DISABLED">Disabled</option>
+        </select>
         <form className="flex flex-1 gap-2" onSubmit={(e) => { e.preventDefault(); search(q.trim()) }}>
           <Input placeholder="Search name or email…" value={q} onChange={(e) => setQ(e.target.value)} className="max-w-xs" />
           <Button type="submit" variant="outline">Search</Button>

@@ -2,6 +2,8 @@
 
 export type Role = "STUDENT" | "INSTRUCTOR" | "ADMIN"
 export type QuestionType = "SINGLE_CHOICE" | "MULTIPLE_CHOICE" | "TRUE_FALSE"
+/** MCQ = subject-tagged practice exam; RECALL = past questions tagged with subject + year. */
+export type TestKind = "MCQ" | "RECALL"
 export type SubscriptionStatus = "PENDING" | "ACTIVE" | "EXPIRED" | "CANCELLED"
 /** IMMEDIATE = reveal the answer + explanation as the student answers (study mode).
  *  ON_SUBMISSION = reveal only after the whole test/exam is submitted (exam mode). */
@@ -154,11 +156,13 @@ export interface StudentTestResponse {
   feedbackMode: FeedbackMode
   questions: StudentQuestionResponse[]
 }
-/** Immediate-mode per-question reveal. `timerPaused`/`expiresAt` only matter for timed mocks. */
+/** Immediate-mode per-question reveal. `timerPaused`/`expiresAt` only matter for timed mocks.
+ *  `correctOptionIds` lists every correct option (for multiple-choice); `correctOptionId` is the first. */
 export interface CheckAnswerResponse {
   questionId: number
   correct: boolean
   correctOptionId: number | null
+  correctOptionIds: number[]
   explanation: string | null
   timerPaused: boolean
   expiresAt: string | null
@@ -168,6 +172,7 @@ export interface AttemptAnswerResponse {
   questionText: string
   selectedOptionId: number | null
   correctOptionId: number | null
+  correctOptionIds: number[]
   explanation: string | null
   correct: boolean
 }
@@ -221,6 +226,36 @@ export interface InitializeSubscriptionResponse {
   reference: string
 }
 
+export interface SubjectResponse {
+  id: number
+  name: string
+  slug: string
+  orderIndex: number
+  active: boolean
+}
+
+/** Student list-card view of a recall paper — click through to read its questions. */
+export interface RecallSummaryResponse {
+  id: number
+  title: string
+  description: string | null
+  subjectName: string | null
+  examYear: number | null
+  questionCount: number
+}
+
+/** A single recall question for the student study view — answers revealed (view-only). */
+export interface RecallQuestionResponse {
+  id: number
+  subjectName: string | null
+  examYear: number | null
+  sourceTitle: string | null
+  text: string
+  type: QuestionType
+  explanation: string | null
+  options: OptionResponse[]
+}
+
 export interface MockExamResponse {
   id: number
   title: string
@@ -231,6 +266,10 @@ export interface MockExamResponse {
   feedbackMode: FeedbackMode
   ownerName: string | null
   questionCount: number
+  kind: TestKind
+  subjectId: number | null
+  subjectName: string | null
+  examYear: number | null
 }
 
 export interface MockExamSummaryResponse {
@@ -242,6 +281,10 @@ export interface MockExamSummaryResponse {
   questionCount: number
   bestScorePercent: number | null
   attemptCount: number
+  kind: TestKind
+  subjectId: number | null
+  subjectName: string | null
+  examYear: number | null
 }
 
 export interface MockExamStartResponse {

@@ -107,7 +107,7 @@ export function InstructorCoursesPage() {
               {/* Thumbnail */}
               <Link to={`/instructor/courses/${c.id}`} className="relative block aspect-video w-full overflow-hidden bg-muted">
                 {c.thumbnailUrl ? (
-                  <img src={c.thumbnailUrl} alt="" className="size-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                  <img src={c.thumbnailUrl} alt="" className="absolute inset-0 size-full object-cover transition-transform duration-300 group-hover:scale-105" />
                 ) : (
                   <div className="flex size-full items-center justify-center bg-gradient-to-br from-primary/15 to-accent">
                     <BookOpen className="size-9 text-primary/40" />

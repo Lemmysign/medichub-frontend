@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, Navigate, useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { useAuth, homePathFor } from "@/context/AuthContext"
 import { errorMessage } from "@/lib/api"
@@ -10,12 +10,15 @@ import { Label } from "@/components/ui/label"
 import { ArrowRight, Eye, EyeOff, Loader2 } from "lucide-react"
 
 export function LoginPage() {
-  const { login } = useAuth()
+  const { login, user } = useAuth()
   const navigate = useNavigate()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
+
+  // Already signed in? Skip the form and go straight to the dashboard.
+  if (user) return <Navigate to={homePathFor(user.role)} replace />
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()

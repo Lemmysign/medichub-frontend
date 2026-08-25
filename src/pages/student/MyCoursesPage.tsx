@@ -32,9 +32,9 @@ export function MyCoursesPage() {
               to={`/student/courses/${c.courseId}`}
               className="group overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-primary/40 hover:shadow-md"
             >
-              <div className="relative aspect-[16/7] w-full bg-muted">
+              <div className="relative aspect-[16/7] w-full overflow-hidden bg-muted">
                 {c.thumbnailUrl ? (
-                  <img src={c.thumbnailUrl} alt="" className="size-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                  <img src={c.thumbnailUrl} alt="" className="absolute inset-0 size-full object-cover transition-transform duration-300 group-hover:scale-105" />
                 ) : (
                   <div className="flex size-full items-center justify-center text-muted-foreground"><BookOpen className="size-8" /></div>
                 )}

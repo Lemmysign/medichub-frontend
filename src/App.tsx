@@ -1,16 +1,12 @@
 import { Routes, Route, Navigate } from "react-router-dom"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { AppLayout } from "@/components/layout/AppLayout"
-import { PublicLayout } from "@/components/layout/PublicLayout"
 
 import { LoginPage } from "@/pages/auth/LoginPage"
 import { AdminLoginPage } from "@/pages/auth/AdminLoginPage"
 import { RegisterPage } from "@/pages/auth/RegisterPage"
 import { ForgotPasswordPage } from "@/pages/auth/ForgotPasswordPage"
 import { ResetPasswordPage } from "@/pages/auth/ResetPasswordPage"
-
-import { LandingPage } from "@/pages/public/LandingPage"
-import { CoursePreviewPage } from "@/pages/public/CoursePreviewPage"
 
 import { StudentDashboardPage } from "@/pages/student/StudentDashboardPage"
 import { BrowsePage } from "@/pages/student/BrowsePage"
@@ -19,9 +15,12 @@ import { CoursePlayerPage } from "@/pages/student/CoursePlayerPage"
 import { TestTakePage } from "@/pages/student/TestTakePage"
 import { SubscriptionPage } from "@/pages/student/SubscriptionPage"
 import { StudentMockExamsPage } from "@/pages/student/StudentMockExamsPage"
+import { StudentRecallsPage } from "@/pages/student/StudentRecallsPage"
+import { StudentRecallViewPage } from "@/pages/student/StudentRecallViewPage"
 import { MockExamRunPage } from "@/pages/student/MockExamRunPage"
 import { MockExamsListPage } from "@/pages/mock/MockExamsListPage"
 import { MockExamManagePage } from "@/pages/mock/MockExamManagePage"
+import { RecallsListPage } from "@/pages/recall/RecallsListPage"
 
 import { InstructorDashboardPage } from "@/pages/instructor/InstructorDashboardPage"
 import { InstructorCoursesPage } from "@/pages/instructor/InstructorCoursesPage"
@@ -30,6 +29,7 @@ import { InstructorQuestionsPage } from "@/pages/instructor/InstructorQuestionsP
 
 import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage"
 import { AdminUsersPage } from "@/pages/admin/AdminUsersPage"
+import { AdminSubjectsPage } from "@/pages/admin/AdminSubjectsPage"
 import { AdminPlanPage } from "@/pages/admin/AdminPlanPage"
 import { AdminSettingsPage } from "@/pages/admin/AdminSettingsPage"
 
@@ -45,11 +45,9 @@ function App() {
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-      {/* Public */}
-      <Route element={<PublicLayout />}>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/courses/:id" element={<CoursePreviewPage />} />
-      </Route>
+      {/* Root → app entry. This is the app (app.medichubacademy.com); marketing lives on the
+          separate Pass MDCN site. LoginPage bounces already-authenticated users to their dashboard. */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
 
       {/* Any authenticated user */}
       <Route element={<ProtectedRoute />}>
@@ -68,6 +66,8 @@ function App() {
           <Route path="/student/courses/:courseId/tests/:testId" element={<TestTakePage />} />
           <Route path="/student/mock-exams" element={<StudentMockExamsPage />} />
           <Route path="/student/mock-exams/:id" element={<MockExamRunPage />} />
+          <Route path="/student/recalls" element={<StudentRecallsPage />} />
+          <Route path="/student/recalls/:id" element={<StudentRecallViewPage />} />
           <Route path="/student/subscription" element={<SubscriptionPage />} />
         </Route>
       </Route>
@@ -80,6 +80,8 @@ function App() {
           <Route path="/instructor/courses/:id" element={<InstructorCourseManagePage />} />
           <Route path="/instructor/mock-exams" element={<MockExamsListPage />} />
           <Route path="/instructor/mock-exams/:id" element={<MockExamManagePage />} />
+          <Route path="/instructor/recalls" element={<RecallsListPage basePath="/instructor/recalls" />} />
+          <Route path="/instructor/recalls/:id" element={<MockExamManagePage basePath="recalls" kind="RECALL" />} />
           <Route path="/instructor/questions" element={<InstructorQuestionsPage />} />
         </Route>
       </Route>
@@ -91,12 +93,15 @@ function App() {
           <Route path="/admin/users" element={<AdminUsersPage />} />
           <Route path="/admin/mock-exams" element={<MockExamsListPage />} />
           <Route path="/admin/mock-exams/:id" element={<MockExamManagePage />} />
+          <Route path="/admin/recalls" element={<RecallsListPage basePath="/admin/recalls" />} />
+          <Route path="/admin/recalls/:id" element={<MockExamManagePage basePath="recalls" kind="RECALL" />} />
+          <Route path="/admin/subjects" element={<AdminSubjectsPage />} />
           <Route path="/admin/plan" element={<AdminPlanPage />} />
           <Route path="/admin/settings" element={<AdminSettingsPage />} />
         </Route>
       </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   )
 }

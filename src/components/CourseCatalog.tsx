@@ -69,9 +69,9 @@ export function CourseCatalog({
               to={hrefFor(c.id)}
               className="group flex h-full flex-col overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-primary/40 hover:shadow-md"
             >
-              <div className="aspect-video w-full bg-muted">
+              <div className="relative aspect-video w-full overflow-hidden bg-muted">
                 {c.thumbnailUrl ? (
-                  <img src={c.thumbnailUrl} alt="" className="size-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                  <img src={c.thumbnailUrl} alt="" className="absolute inset-0 size-full object-cover transition-transform duration-300 group-hover:scale-105" />
                 ) : (
                   <div className="flex size-full items-center justify-center bg-gradient-to-br from-primary/15 to-accent">
                     <GraduationCap className="size-10 text-primary/40" />

@@ -25,8 +25,8 @@ import {
 type Phase = "intro" | "running" | "result"
 
 interface Reveal {
-  correctOptionId: number | null
-  selectedOptionId: number | null
+  correctOptionIds: number[]
+  selectedOptionIds: number[]
   correct: boolean
   explanation: string | null
 }
@@ -68,22 +68,36 @@ function pageWindow(current: number, total: number): (number | "…")[] {
   return out
 }
 
-export function MockExamRunPage() {
+/**
+ * Full-screen exam runner, reused for MCQs ({@code basePath="student/mock-exams"}) and
+ * Recalls ({@code basePath="student/recalls"}). All take endpoints share the same shape.
+ */
+export function MockExamRunPage({
+  basePath = "student/mock-exams",
+  backTo = "/student/mock-exams",
+  backLabel = "MCQs",
+  eyebrow = "Mock examination",
+}: {
+  basePath?: string
+  backTo?: string
+  backLabel?: string
+  eyebrow?: string
+}) {
   const { id } = useParams()
   const mockId = Number(id)
 
   const list = useApi(
-    () => api.get<PagedResponse<MockExamSummaryResponse>>("/student/mock-exams", { params: { size: 100 } }).then((r) => r.data),
+    () => api.get<PagedResponse<MockExamSummaryResponse>>(`/${basePath}`, { params: { size: 100 } }).then((r) => r.data),
     [],
   )
   const attempts = useApi(
-    () => api.get<PagedResponse<AttemptResponse>>(`/student/mock-exams/${mockId}/attempts`, { params: { size: 20 } }).then((r) => r.data),
+    () => api.get<PagedResponse<AttemptResponse>>(`/${basePath}/${mockId}/attempts`, { params: { size: 20 } }).then((r) => r.data),
     [mockId],
   )
 
   const [phase, setPhase] = useState<Phase>("intro")
   const [exam, setExam] = useState<MockExamStartResponse | null>(null)
-  const [answers, setAnswers] = useState<Record<number, number>>({})
+  const [answers, setAnswers] = useState<Record<number, number[]>>({})
   const [checks, setChecks] = useState<Record<number, CheckAnswerResponse>>({})
   const [flags, setFlags] = useState<Set<number>>(new Set())
   const [current, setCurrent] = useState(0)
@@ -115,7 +129,7 @@ export function MockExamRunPage() {
   async function start() {
     setStarting(true)
     try {
-      const res = await api.post<MockExamStartResponse>(`/student/mock-exams/${mockId}/start`)
+      const res = await api.post<MockExamStartResponse>(`/${basePath}/${mockId}/start`)
       submittedRef.current = false
       setExam(res.data)
       setAnswers({}); setChecks({}); setFlags(new Set()); setCurrent(0)
@@ -127,14 +141,27 @@ export function MockExamRunPage() {
     }
   }
 
-  async function pick(q: StudentQuestionResponse, optionId: number) {
+  function toggle(q: StudentQuestionResponse, optionId: number) {
     if (!exam || phase !== "running" || checks[q.id] || paused) return
-    setAnswers((prev) => ({ ...prev, [q.id]: optionId }))
-    if (!immediate) return
+    const multi = q.type === "MULTIPLE_CHOICE"
+    setAnswers((prev) => {
+      const cur = prev[q.id] ?? []
+      if (multi) {
+        const next = cur.includes(optionId) ? cur.filter((x) => x !== optionId) : [...cur, optionId]
+        return { ...prev, [q.id]: next }
+      }
+      return { ...prev, [q.id]: [optionId] }
+    })
+    // Single-answer questions reveal immediately on pick; multiple-choice waits for the Check button.
+    if (immediate && !multi) void checkQuestion(q, [optionId])
+  }
+
+  async function checkQuestion(q: StudentQuestionResponse, ids: number[]) {
+    if (!exam || ids.length === 0) return
     try {
       const res = await api.post<CheckAnswerResponse>(
-        `/student/mock-exams/${mockId}/attempts/${exam.attemptId}/questions/${q.id}/check`,
-        { selectedOptionId: optionId },
+        `/${basePath}/${mockId}/attempts/${exam.attemptId}/questions/${q.id}/check`,
+        { selectedOptionIds: ids },
       )
       setChecks((prev) => ({ ...prev, [q.id]: res.data }))
       if (res.data.timerPaused) setPaused(true)
@@ -147,7 +174,7 @@ export function MockExamRunPage() {
     if (!exam) return
     setResuming(true)
     try {
-      const res = await api.post<MockExamStartResponse>(`/student/mock-exams/${mockId}/attempts/${exam.attemptId}/resume`)
+      const res = await api.post<MockExamStartResponse>(`/${basePath}/${mockId}/attempts/${exam.attemptId}/resume`)
       setExam((prev) => (prev ? { ...prev, expiresAt: res.data.expiresAt } : res.data))
       setPaused(false)
     } catch (e) {
@@ -162,8 +189,12 @@ export function MockExamRunPage() {
     submittedRef.current = true
     setConfirmOpen(false)
     try {
-      const payload = { answers: Object.entries(answers).map(([q, o]) => ({ questionId: Number(q), selectedOptionId: o })) }
-      const res = await api.post<AttemptDetailResponse>(`/student/mock-exams/${mockId}/attempts/${exam.attemptId}/submit`, payload)
+      const payload = {
+        answers: Object.entries(answers)
+          .filter(([, ids]) => ids.length > 0)
+          .map(([q, ids]) => ({ questionId: Number(q), selectedOptionIds: ids })),
+      }
+      const res = await api.post<AttemptDetailResponse>(`/${basePath}/${mockId}/attempts/${exam.attemptId}/submit`, payload)
       setResult(res.data); setPaused(false); setPhase("result")
       attempts.reload(); list.reload()
       if (auto) toast.message("Time's up — your exam was submitted automatically.")
@@ -183,7 +214,7 @@ export function MockExamRunPage() {
 
   const summary = list.data?.content.find((m) => m.id === mockId)
   const total = exam?.questions.length ?? 0
-  const answeredCount = Object.keys(answers).length
+  const answeredCount = Object.values(answers).filter((a) => a.length > 0).length
 
   const resultByQuestion = useMemo(
     () => new Map(result?.answers.map((a) => [a.questionId, a])),
@@ -191,9 +222,9 @@ export function MockExamRunPage() {
   )
   function revealFor(qid: number): Reveal | null {
     const r = resultByQuestion.get(qid)
-    if (r) return { correctOptionId: r.correctOptionId, selectedOptionId: r.selectedOptionId, correct: r.correct, explanation: r.explanation }
+    if (r) return { correctOptionIds: r.correctOptionIds ?? [], selectedOptionIds: r.selectedOptionIds ?? [], correct: r.correct, explanation: r.explanation }
     const c = checks[qid]
-    if (c) return { correctOptionId: c.correctOptionId, selectedOptionId: answers[qid] ?? null, correct: c.correct, explanation: c.explanation }
+    if (c) return { correctOptionIds: c.correctOptionIds ?? [], selectedOptionIds: answers[qid] ?? [], correct: c.correct, explanation: c.explanation }
     return null
   }
 
@@ -203,8 +234,8 @@ export function MockExamRunPage() {
     const history = attempts.data?.content ?? []
     return (
       <div className="mx-auto max-w-2xl">
-        <Link to="/student/mock-exams" className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="size-4" /> Back to Mock Exams
+        <Link to={backTo} className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="size-4" /> Back to {backLabel}
         </Link>
 
         <Card className="overflow-hidden p-0">
@@ -212,8 +243,10 @@ export function MockExamRunPage() {
             <div className="mb-3 flex size-11 items-center justify-center rounded-md bg-white/15">
               <ClipboardList className="size-5" />
             </div>
-            <div className="font-700 text-[10px] uppercase tracking-widest opacity-80">Mock examination</div>
-            <h1 className="font-800 text-2xl tracking-tight">{summary?.title ?? "Mock Exam"}</h1>
+            <div className="font-700 text-[10px] uppercase tracking-widest opacity-80">
+              {eyebrow}{summary?.subjectName ? ` · ${summary.subjectName}` : ""}{summary?.examYear ? ` · ${summary.examYear}` : ""}
+            </div>
+            <h1 className="font-800 text-2xl tracking-tight">{summary?.title ?? "Exam"}</h1>
             {summary?.description && <p className="mt-2 text-sm opacity-90">{summary.description}</p>}
           </div>
 
@@ -265,11 +298,17 @@ export function MockExamRunPage() {
     return (
       <div className="mx-auto max-w-3xl">
         <Card className={"mb-6 p-6 " + (result.passed ? "border-success/40 bg-success/5" : "border-destructive/40 bg-destructive/5")}>
-          <div className="flex items-center gap-3">
-            {result.passed ? <CheckCircle2 className="size-8 text-success" /> : <XCircle className="size-8 text-destructive" />}
-            <div>
-              <p className="tabular font-800 text-3xl">{result.scorePercent}%</p>
-              <p className="text-sm text-muted-foreground">{result.passed ? "Passed" : "Not passed"} · pass mark {exam.passMarkPercent}%</p>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              {result.passed ? <CheckCircle2 className="size-8 text-success" /> : <XCircle className="size-8 text-destructive" />}
+              <div>
+                <p className="tabular font-800 text-3xl">{result.scorePercent}%</p>
+                <p className="text-sm text-muted-foreground">{result.passed ? "Passed" : "Not passed"} · pass mark {exam.passMarkPercent}%</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => setPhase("intro")}>Done</Button>
+              <Button onClick={start}>Retake</Button>
             </div>
           </div>
         </Card>
@@ -285,8 +324,8 @@ export function MockExamRunPage() {
                 </div>
                 <div className="mt-3 space-y-2">
                   {q.options.map((o, oi) => {
-                    const isCorrect = reveal && reveal.correctOptionId === o.id
-                    const isWrongPick = reveal && !reveal.correct && reveal.selectedOptionId === o.id
+                    const isCorrect = reveal && reveal.correctOptionIds.includes(o.id)
+                    const isWrongPick = reveal && reveal.selectedOptionIds.includes(o.id) && !reveal.correctOptionIds.includes(o.id)
                     let cls = "border-border"
                     if (isCorrect) cls = "border-success bg-success/10"
                     else if (isWrongPick) cls = "border-destructive bg-destructive/10"
@@ -311,10 +350,6 @@ export function MockExamRunPage() {
           })}
         </div>
 
-        <div className="mt-6 flex gap-2">
-          <Button variant="outline" onClick={() => setPhase("intro")}>Done</Button>
-          <Button onClick={start}>Retake</Button>
-        </div>
       </div>
     )
   }
@@ -323,6 +358,8 @@ export function MockExamRunPage() {
   const q = exam.questions[current]
   const reveal = revealFor(q.id)
   const locked = !!checks[q.id] || paused
+  const isMulti = q.type === "MULTIPLE_CHOICE"
+  const picked = answers[q.id] ?? []
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-background">
@@ -370,11 +407,14 @@ export function MockExamRunPage() {
             <p className="leading-relaxed">{q.text}</p>
           </Card>
 
+          {isMulti && !locked && (
+            <p className="mb-2 text-xs font-600 text-muted-foreground">Select all that apply.</p>
+          )}
           <div className="space-y-3">
             {q.options.map((o, oi) => {
-              const selected = answers[q.id] === o.id
-              const isCorrect = reveal && reveal.correctOptionId === o.id
-              const isWrongPick = reveal && !reveal.correct && reveal.selectedOptionId === o.id
+              const selected = picked.includes(o.id)
+              const isCorrect = reveal && reveal.correctOptionIds.includes(o.id)
+              const isWrongPick = reveal && reveal.selectedOptionIds.includes(o.id) && !reveal.correctOptionIds.includes(o.id)
               let cls = "border-border bg-card hover:bg-muted"
               if (isCorrect) cls = "border-success bg-success/10"
               else if (isWrongPick) cls = "border-destructive bg-destructive/10"
@@ -383,12 +423,12 @@ export function MockExamRunPage() {
                 <label key={o.id} className={"flex items-center gap-3 rounded-lg border p-4 text-sm transition-colors " + (locked ? "cursor-default " : "cursor-pointer ") + cls}>
                   <span className="font-700 w-4 shrink-0 text-muted-foreground">{LETTERS[oi]}</span>
                   <input
-                    type="radio"
+                    type={isMulti ? "checkbox" : "radio"}
                     name={`q-${q.id}`}
                     checked={selected}
                     disabled={locked}
-                    onChange={() => pick(q, o.id)}
-                    className="size-4 shrink-0 accent-primary"
+                    onChange={() => toggle(q, o.id)}
+                    className={"size-4 shrink-0 accent-primary " + (isMulti ? "rounded" : "")}
                   />
                   <span className="flex-1">{o.text}</span>
                   {isCorrect && <CheckCircle2 className="size-4 text-success" />}
@@ -398,8 +438,15 @@ export function MockExamRunPage() {
             })}
           </div>
 
-          {/* Immediate-mode reveal (only on a wrong pick) */}
-          {immediate && reveal && !reveal.correct && reveal.explanation && (
+          {/* Multiple-choice needs an explicit check in study mode (single-answer reveals on pick). */}
+          {immediate && isMulti && !locked && (
+            <Button className="mt-3" size="sm" disabled={picked.length === 0} onClick={() => checkQuestion(q, picked)}>
+              Check answer
+            </Button>
+          )}
+
+          {/* Immediate-mode reveal — shown once answered, whether right or wrong */}
+          {immediate && reveal && reveal.explanation && (
             <div className="mt-4 flex gap-2 rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-sm">
               <Lightbulb className="mt-0.5 size-4 shrink-0 text-amber-500" />
               <p><span className="font-600">Explanation: </span>{reveal.explanation}</p>
@@ -430,7 +477,7 @@ export function MockExamRunPage() {
                     className={"tabular size-8 rounded-md text-xs font-600 transition-colors " +
                       (p === current + 1
                         ? "bg-primary text-primary-foreground"
-                        : answers[exam.questions[p - 1].id] != null
+                        : (answers[exam.questions[p - 1].id]?.length ?? 0) > 0
                         ? "bg-primary/10 text-primary hover:bg-primary/20"
                         : flags.has(exam.questions[p - 1].id)
                         ? "bg-warning/15 text-warning"
