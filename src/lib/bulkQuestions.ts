@@ -6,6 +6,7 @@ export interface ParsedQuestion {
   text: string
   type: QuestionType
   explanation: string | null
+  imageUrl: string | null
   options: { text: string; correct: boolean }[]
 }
 
@@ -69,7 +70,8 @@ function toQuestion(rowObj: Record<string, string>): ParsedQuestion {
     options.push({ text, correct: isTruthy(rowObj[`correct${n}`]) })
   }
   const explanation = (rowObj["explanation"] ?? "").trim()
-  return { text: (rowObj["text"] ?? "").trim(), type, explanation: explanation || null, options }
+  const imageUrl = (rowObj["imageurl"] ?? rowObj["image"] ?? "").trim()
+  return { text: (rowObj["text"] ?? "").trim(), type, explanation: explanation || null, imageUrl: imageUrl || null, options }
 }
 
 /** Read an .xlsx or .csv file into validated question rows. */
@@ -95,15 +97,15 @@ export async function parseQuestionFile(file: File): Promise<ParseResult> {
 /** Build and download a starter .xlsx template with the expected columns + an example. */
 export function downloadTemplate() {
   const header = [
-    "text", "type", "explanation",
+    "text", "type", "explanation", "imageUrl",
     "option1", "correct1", "option2", "correct2", "option3", "correct3", "option4", "correct4",
   ]
   const examples = [
-    ["What is the capital of France?", "SINGLE_CHOICE", "Paris is the capital of France.",
+    ["What is the capital of France?", "SINGLE_CHOICE", "Paris is the capital of France.", "",
       "Paris", "TRUE", "Rome", "FALSE", "Lagos", "FALSE", "Berlin", "FALSE"],
-    ["Which are signs of inflammation?", "MULTIPLE_CHOICE", "Calor, rubor, tumor, dolor.",
+    ["Which are signs of inflammation?", "MULTIPLE_CHOICE", "Calor, rubor, tumor, dolor.", "",
       "Redness", "TRUE", "Heat", "TRUE", "Numbness", "FALSE", "Pallor", "FALSE"],
-    ["The heart has four chambers.", "TRUE_FALSE", "Two atria and two ventricles.",
+    ["The heart has four chambers.", "TRUE_FALSE", "Two atria and two ventricles.", "",
       "True", "TRUE", "False", "FALSE", "", "", "", ""],
   ]
   const ws = XLSX.utils.aoa_to_sheet([header, ...examples])

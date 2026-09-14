@@ -147,6 +147,7 @@ export interface QuestionResponse {
   text: string
   type: QuestionType
   explanation: string | null
+  imageUrl: string | null
   orderIndex: number
   options: OptionResponse[]
 }
@@ -168,6 +169,7 @@ export interface StudentQuestionResponse {
   text: string
   type: QuestionType
   orderIndex: number
+  imageUrl: string | null
   options: StudentOptionResponse[]
 }
 export interface StudentTestResponse {
@@ -256,6 +258,27 @@ export interface SubjectResponse {
   active: boolean
 }
 
+/** A short-lived signed URL for viewing a gated file (study docs, materials). */
+export interface DownloadUrlResponse {
+  url: string
+  expiresInSeconds: number
+}
+
+/** A study document (PDF/Word) — creator and student list view. */
+export interface StudyMaterialResponse {
+  id: number
+  title: string
+  description: string | null
+  subjectId: number | null
+  subjectName: string | null
+  fileName: string
+  contentType: string | null
+  sizeBytes: number | null
+  published: boolean
+  ownerName: string | null
+  createdAt: string
+}
+
 /** Student list-card view of a recall paper — click through to read its questions. */
 export interface RecallSummaryResponse {
   id: number
@@ -264,6 +287,14 @@ export interface RecallSummaryResponse {
   subjectName: string | null
   examYear: number | null
   questionCount: number
+}
+
+/** An MCQ paper in practice mode — questions carry answers + explanations for reveal-on-click. */
+export interface PracticePaperResponse {
+  id: number
+  title: string
+  subjectName: string | null
+  questions: QuestionResponse[]
 }
 
 /** A single recall question for the student study view — answers revealed (view-only). */
@@ -275,6 +306,7 @@ export interface RecallQuestionResponse {
   text: string
   type: QuestionType
   explanation: string | null
+  imageUrl: string | null
   options: OptionResponse[]
 }
 

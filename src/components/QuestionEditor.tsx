@@ -1,18 +1,19 @@
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { toast } from "sonner"
-import { errorMessage } from "@/lib/api"
+import { api, errorMessage } from "@/lib/api"
 import type { QuestionType } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
-import { CheckCircle2, Circle, Loader2, Plus, X } from "lucide-react"
+import { CheckCircle2, Circle, ImagePlus, Loader2, Plus, X } from "lucide-react"
 
 export interface QuestionPayload {
   text: string
   type: QuestionType
   explanation: string | null
+  imageUrl: string | null
   options: { text: string; correct: boolean }[]
 }
 
@@ -20,6 +21,7 @@ export interface QuestionInitial {
   text: string
   type: QuestionType
   explanation: string | null
+  imageUrl: string | null
   options: { text: string; correct: boolean }[]
 }
 
@@ -53,6 +55,9 @@ export function QuestionEditor({
   const [text, setText] = useState(initial?.text ?? "")
   const [explanation, setExplanation] = useState(initial?.explanation ?? "")
   const [type, setType] = useState<QuestionType>(initial?.type ?? "MULTIPLE_CHOICE")
+  const [imageUrl, setImageUrl] = useState<string | null>(initial?.imageUrl ?? null)
+  const [uploading, setUploading] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
   const [options, setOptions] = useState<Opt[]>(
     initial?.options ?? [
       { text: "", correct: true },
@@ -65,7 +70,27 @@ export function QuestionEditor({
     setText("")
     setExplanation("")
     setType("MULTIPLE_CHOICE")
+    setImageUrl(null)
     setOptions([{ text: "", correct: true }, { text: "", correct: false }])
+  }
+
+  async function onPickImage(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append("file", file)
+      const res = await api.post<{ url: string }>("/images/questions", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      setImageUrl(res.data.url)
+    } catch (err) {
+      toast.error(errorMessage(err, "Image upload failed"))
+    } finally {
+      setUploading(false)
+      if (fileRef.current) fileRef.current.value = ""
+    }
   }
 
   function changeType(next: QuestionType) {
@@ -102,7 +127,7 @@ export function QuestionEditor({
     if (isSingle(type) && correctCount > 1) return toast.error("This question type allows only one correct answer")
     setSaving(true)
     try {
-      await onSave({ text, type, explanation: explanation.trim() || null, options: filled })
+      await onSave({ text, type, explanation: explanation.trim() || null, imageUrl, options: filled })
       if (!editing) reset()
     } catch (e) {
       toast.error(errorMessage(e))
@@ -119,6 +144,32 @@ export function QuestionEditor({
       <div className="space-y-1.5">
         <Label htmlFor="q-text">Question</Label>
         <Textarea id="q-text" rows={2} value={text} onChange={(e) => setText(e.target.value)} placeholder="Type the question stem…" />
+      </div>
+
+      {/* Optional image */}
+      <div className="space-y-1.5">
+        <Label>Image <span className="font-normal text-muted-foreground">(optional — for picture-based questions)</span></Label>
+        {imageUrl ? (
+          <div className="relative w-fit">
+            <img src={imageUrl} alt="Question" className="max-h-48 rounded-lg border border-border object-contain" />
+            <button
+              type="button"
+              onClick={() => setImageUrl(null)}
+              aria-label="Remove image"
+              className="absolute -right-2 -top-2 flex size-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow"
+            >
+              <X className="size-3.5" />
+            </button>
+          </div>
+        ) : (
+          <div>
+            <input ref={fileRef} type="file" accept="image/*" onChange={onPickImage} className="hidden" id="q-image" />
+            <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
+              {uploading ? <Loader2 className="mr-1 size-4 animate-spin" /> : <ImagePlus className="mr-1 size-4" />}
+              {uploading ? "Uploading…" : "Add image"}
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Type — segmented control */}

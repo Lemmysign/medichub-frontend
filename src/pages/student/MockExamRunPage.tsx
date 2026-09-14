@@ -322,6 +322,7 @@ export function MockExamRunPage({
                   <p className="font-600"><span className="text-muted-foreground">{i + 1}.</span> {q.text}</p>
                   {reveal && <Badge variant={reveal.correct ? "default" : "destructive"}>{reveal.correct ? "Correct" : "Wrong"}</Badge>}
                 </div>
+                {q.imageUrl && <img src={q.imageUrl} alt="" className="mt-3 max-h-72 rounded-lg border border-border object-contain" />}
                 <div className="mt-3 space-y-2">
                   {q.options.map((o, oi) => {
                     const isCorrect = reveal && reveal.correctOptionIds.includes(o.id)
@@ -405,6 +406,7 @@ export function MockExamRunPage({
 
           <Card className="mb-4 p-6">
             <p className="leading-relaxed">{q.text}</p>
+            {q.imageUrl && <img src={q.imageUrl} alt="" className="mt-4 max-h-80 rounded-lg border border-border object-contain" />}
           </Card>
 
           {isMulti && !locked && (

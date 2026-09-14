@@ -100,7 +100,7 @@ export function MockExamManagePage({ basePath = "mock-exams", kind = "MCQ" as Te
                     return editingQid === q.id ? (
                       <div key={q.id} className="p-4">
                         <QuestionEditor
-                          initial={{ text: q.text, type: q.type, explanation: q.explanation, options: q.options.map((o) => ({ text: o.text, correct: o.correct })) }}
+                          initial={{ text: q.text, type: q.type, explanation: q.explanation, imageUrl: q.imageUrl, options: q.options.map((o) => ({ text: o.text, correct: o.correct })) }}
                           onSave={(p) => updateQuestion(q.id, p)}
                           onCancel={() => setEditingQid(null)}
                           submitLabel="Update question"
@@ -115,6 +115,7 @@ export function MockExamManagePage({ basePath = "mock-exams", kind = "MCQ" as Te
                             <Button size="sm" variant="ghost" onClick={() => removeQuestion(q.id)}><Trash2 className="size-4 text-destructive" /></Button>
                           </div>
                         </div>
+                        {q.imageUrl && <img src={q.imageUrl} alt="" className="mt-2 max-h-40 rounded-md border border-border object-contain" />}
                         <div className="mt-1 flex flex-wrap gap-2">
                           {q.options.map((o) => (
                             <Badge key={o.id} variant={o.correct ? "default" : "secondary"}>{o.text}</Badge>

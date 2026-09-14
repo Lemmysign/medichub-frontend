@@ -17,6 +17,11 @@ import { CoursePlayerPage } from "@/pages/student/CoursePlayerPage"
 import { TestTakePage } from "@/pages/student/TestTakePage"
 import { SubscriptionPage } from "@/pages/student/SubscriptionPage"
 import { StudentMockExamsPage } from "@/pages/student/StudentMockExamsPage"
+import { StudentMcqListPage } from "@/pages/student/StudentMcqListPage"
+import { StudentMcqPracticePage } from "@/pages/student/StudentMcqPracticePage"
+import { StudentStudyListPage } from "@/pages/student/StudentStudyListPage"
+import { StudentStudyViewPage } from "@/pages/student/StudentStudyViewPage"
+import { StudyManagePage } from "@/pages/study/StudyManagePage"
 import { StudentRecallsPage } from "@/pages/student/StudentRecallsPage"
 import { StudentRecallViewPage } from "@/pages/student/StudentRecallViewPage"
 import { MockExamRunPage } from "@/pages/student/MockExamRunPage"
@@ -71,6 +76,10 @@ function App() {
           <Route path="/student/courses/:courseId/tests/:testId" element={<TestTakePage />} />
           <Route path="/student/mock-exams" element={<StudentMockExamsPage />} />
           <Route path="/student/mock-exams/:id" element={<MockExamRunPage />} />
+          <Route path="/student/mcq" element={<StudentMcqListPage />} />
+          <Route path="/student/mcq/:id" element={<StudentMcqPracticePage />} />
+          <Route path="/student/study" element={<StudentStudyListPage />} />
+          <Route path="/student/study/:id" element={<StudentStudyViewPage />} />
           <Route path="/student/recalls" element={<StudentRecallsPage />} />
           <Route path="/student/recalls/:id" element={<StudentRecallViewPage />} />
           <Route path="/student/subscription" element={<SubscriptionPage />} />
@@ -87,6 +96,7 @@ function App() {
           <Route path="/instructor/mock-exams/:id" element={<MockExamManagePage />} />
           <Route path="/instructor/recalls" element={<RecallsListPage basePath="/instructor/recalls" />} />
           <Route path="/instructor/recalls/:id" element={<MockExamManagePage basePath="recalls" kind="RECALL" />} />
+          <Route path="/instructor/study" element={<StudyManagePage />} />
           <Route path="/instructor/questions" element={<InstructorQuestionsPage />} />
         </Route>
       </Route>
@@ -101,6 +111,7 @@ function App() {
           <Route path="/admin/mock-exams/:id" element={<MockExamManagePage />} />
           <Route path="/admin/recalls" element={<RecallsListPage basePath="/admin/recalls" />} />
           <Route path="/admin/recalls/:id" element={<MockExamManagePage basePath="recalls" kind="RECALL" />} />
+          <Route path="/admin/study" element={<StudyManagePage />} />
           <Route path="/admin/subjects" element={<AdminSubjectsPage />} />
           <Route path="/admin/plan" element={<AdminPlanPage />} />
           <Route path="/admin/settings" element={<AdminSettingsPage />} />

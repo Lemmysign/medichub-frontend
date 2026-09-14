@@ -30,7 +30,7 @@ export function StudentMockExamsPage() {
 
   return (
     <>
-      <PageHeader title="MCQs" description="Subject-tagged practice exams — timed or self-paced, auto-graded with explanations." />
+      <PageHeader title="Mock exam" description="Full, timed, auto-graded papers under exam conditions — filter by subject." />
 
       <SubjectFilter subjects={subjects.data ?? []} value={subjectId} onChange={(v) => { setSubjectId(v); setPage(0) }} />
 

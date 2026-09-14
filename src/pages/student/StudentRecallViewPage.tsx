@@ -65,6 +65,7 @@ export function StudentRecallViewPage() {
               return (
                 <Card key={q.id} className="p-5">
                   <p className="font-600"><span className="text-muted-foreground">{number}.</span> {q.text}</p>
+                  {q.imageUrl && <img src={q.imageUrl} alt="" className="mt-3 max-h-72 rounded-lg border border-border object-contain" />}
 
                   <div className="mt-3 space-y-2">
                     {q.options.map((o, oi) => {
