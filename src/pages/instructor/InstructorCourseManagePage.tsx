@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom"
 import { toast } from "sonner"
 import { api, errorMessage } from "@/lib/api"
 import { useApi } from "@/hooks/useApi"
+import { useConfirm } from "@/components/ConfirmDialogProvider"
 import type { CourseResponse, FeedbackMode, MaterialResponse, QuestionResponse, TestResponse, TopicResponse } from "@/lib/types"
 import { QuestionEditor, type QuestionPayload } from "@/components/QuestionEditor"
 import { BulkImportDialog } from "@/components/BulkImportDialog"
@@ -185,6 +186,7 @@ function TopicsTab({ courseId }: { courseId: number }) {
     () => api.get<TopicResponse[]>(`/instructor/courses/${courseId}/topics`).then((r) => r.data),
     [courseId],
   )
+  const confirm = useConfirm()
   const [title, setTitle] = useState("")
   const [busy, setBusy] = useState(false)
 
@@ -198,7 +200,7 @@ function TopicsTab({ courseId }: { courseId: number }) {
     } catch (e) { toast.error(errorMessage(e)) } finally { setBusy(false) }
   }
   async function remove(topicId: number) {
-    if (!confirm("Delete this topic?")) return
+    if (!(await confirm("Delete this topic? This cannot be undone."))) return
     try { await api.delete(`/instructor/courses/${courseId}/topics/${topicId}`); reload() }
     catch (e) { toast.error(errorMessage(e)) }
   }
@@ -242,6 +244,7 @@ function MaterialsTab({ courseId }: { courseId: number }) {
     [courseId],
   )
   const fileRef = useRef<HTMLInputElement>(null)
+  const confirm = useConfirm()
   const [uploading, setUploading] = useState(false)
 
   async function upload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -258,7 +261,7 @@ function MaterialsTab({ courseId }: { courseId: number }) {
     finally { setUploading(false); if (fileRef.current) fileRef.current.value = "" }
   }
   async function remove(materialId: number) {
-    if (!confirm("Delete this material?")) return
+    if (!(await confirm("Delete this material? This cannot be undone."))) return
     try { await api.delete(`/instructor/courses/${courseId}/materials/${materialId}`); reload() }
     catch (e) { toast.error(errorMessage(e)) }
   }
@@ -346,6 +349,7 @@ function TestsTab({ courseId }: { courseId: number }) {
 }
 
 function TestCard({ courseId, test, onChanged }: { courseId: number; test: TestResponse; onChanged: () => void }) {
+  const confirm = useConfirm()
   const [open, setOpen] = useState(false)
   const [editingConfig, setEditingConfig] = useState(false)
   const [adding, setAdding] = useState(false)
@@ -369,7 +373,7 @@ function TestCard({ courseId, test, onChanged }: { courseId: number; test: TestR
     qs.reload()
   }
   async function removeQuestion(qid: number) {
-    if (!confirm("Delete this question?")) return
+    if (!(await confirm("Delete this question? This cannot be undone."))) return
     try { await api.delete(`/instructor/courses/${courseId}/tests/${test.id}/questions/${qid}`); qs.reload(); onChanged() }
     catch (e) { toast.error(errorMessage(e)) }
   }
@@ -407,7 +411,7 @@ function TestCard({ courseId, test, onChanged }: { courseId: number; test: TestR
                 editingQid === q.id ? (
                   <QuestionEditor
                     key={q.id}
-                    initial={{ text: q.text, type: q.type, explanation: q.explanation, options: q.options.map((o) => ({ text: o.text, correct: o.correct })) }}
+                    initial={{ text: q.text, type: q.type, explanation: q.explanation, imageUrl: q.imageUrl, options: q.options.map((o) => ({ text: o.text, correct: o.correct })) }}
                     onSave={(p) => updateQuestion(q.id, p)}
                     onCancel={() => setEditingQid(null)}
                     submitLabel="Update question"

@@ -2,8 +2,9 @@
 
 export type Role = "STUDENT" | "INSTRUCTOR" | "ADMIN"
 export type QuestionType = "SINGLE_CHOICE" | "MULTIPLE_CHOICE" | "TRUE_FALSE"
-/** MCQ = subject-tagged practice exam; RECALL = past questions tagged with subject + year. */
-export type TestKind = "MCQ" | "RECALL"
+/** MCQ = Mock Exam (timed/graded); RECALL = past questions (subject + year, view-only);
+ *  MCQ_BANK = MCQs (view-only bank, subject only — works exactly like RECALL minus the year). */
+export type TestKind = "MCQ" | "RECALL" | "MCQ_BANK"
 export type SubscriptionStatus = "PENDING" | "ACTIVE" | "EXPIRED" | "CANCELLED"
 /** IMMEDIATE = reveal the answer + explanation as the student answers (study mode).
  *  ON_SUBMISSION = reveal only after the whole test/exam is submitted (exam mode). */
@@ -195,6 +196,7 @@ export interface AttemptAnswerResponse {
   questionId: number
   questionText: string
   selectedOptionId: number | null
+  selectedOptionIds: number[]
   correctOptionId: number | null
   correctOptionIds: number[]
   explanation: string | null
@@ -234,6 +236,8 @@ export interface SubscriptionStatusResponse {
   planName: string | null
   startDate: string | null
   endDate: string | null
+  autoRenews: boolean
+  cancelAtPeriodEnd: boolean
 }
 
 export interface SubscriptionPlanResponse {
@@ -258,25 +262,10 @@ export interface SubjectResponse {
   active: boolean
 }
 
-/** A short-lived signed URL for viewing a gated file (study docs, materials). */
+/** A short-lived signed URL for viewing a gated file (course materials). */
 export interface DownloadUrlResponse {
   url: string
   expiresInSeconds: number
-}
-
-/** A study document (PDF/Word) — creator and student list view. */
-export interface StudyMaterialResponse {
-  id: number
-  title: string
-  description: string | null
-  subjectId: number | null
-  subjectName: string | null
-  fileName: string
-  contentType: string | null
-  sizeBytes: number | null
-  published: boolean
-  ownerName: string | null
-  createdAt: string
 }
 
 /** Student list-card view of a recall paper — click through to read its questions. */
@@ -289,19 +278,32 @@ export interface RecallSummaryResponse {
   questionCount: number
 }
 
-/** An MCQ paper in practice mode — questions carry answers + explanations for reveal-on-click. */
-export interface PracticePaperResponse {
-  id: number
-  title: string
-  subjectName: string | null
-  questions: QuestionResponse[]
-}
-
 /** A single recall question for the student study view — answers revealed (view-only). */
 export interface RecallQuestionResponse {
   id: number
   subjectName: string | null
   examYear: number | null
+  sourceTitle: string | null
+  text: string
+  type: QuestionType
+  explanation: string | null
+  imageUrl: string | null
+  options: OptionResponse[]
+}
+
+/** Student list-card view of an MCQs paper — works exactly like RecallSummaryResponse minus the year. */
+export interface McqSummaryResponse {
+  id: number
+  title: string
+  description: string | null
+  subjectName: string | null
+  questionCount: number
+}
+
+/** A single MCQs (view-only bank) question — answers revealed. Like RecallQuestionResponse minus the year. */
+export interface McqQuestionResponse {
+  id: number
+  subjectName: string | null
   sourceTitle: string | null
   text: string
   type: QuestionType

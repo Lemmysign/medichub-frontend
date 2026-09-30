@@ -4,6 +4,7 @@ import { toast } from "sonner"
 import { api, errorMessage } from "@/lib/api"
 import { useApi } from "@/hooks/useApi"
 import { useSubjects } from "@/hooks/useSubjects"
+import { useConfirm } from "@/components/ConfirmDialogProvider"
 import type { FeedbackMode, MockExamResponse, QuestionResponse, TestKind } from "@/lib/types"
 import { PageHeader, CenteredSpinner, ErrorState } from "@/components/common"
 import { QuestionEditor, type QuestionPayload } from "@/components/QuestionEditor"
@@ -21,8 +22,10 @@ import { Loader2, Pencil, Trash2 } from "lucide-react"
 const QUESTIONS_PER_PAGE = 15
 
 /**
- * Creator-side management of a standalone exam and its questions. Reused for both MCQs
- * ({@code basePath="mock-exams"}) and Recalls ({@code basePath="recalls"}, {@code kind="RECALL"}).
+ * Creator-side management of a standalone exam and its questions. Reused for Mock Exams
+ * ({@code basePath="mock-exams"}), Recalls ({@code basePath="recalls"}, {@code kind="RECALL"}),
+ * and MCQs ({@code basePath="mcqs"}, {@code kind="MCQ_BANK"}). Recalls and MCQs are both
+ * view-only (no exam settings); MCQs additionally have no year field.
  */
 export function MockExamManagePage({ basePath = "mock-exams", kind = "MCQ" as TestKind }: { basePath?: string; kind?: TestKind }) {
   const { id } = useParams()
@@ -31,8 +34,11 @@ export function MockExamManagePage({ basePath = "mock-exams", kind = "MCQ" as Te
   const [editingQid, setEditingQid] = useState<number | null>(null)
   const [editOpen, setEditOpen] = useState(false)
   const [qPage, setQPage] = useState(0)
+  const confirm = useConfirm()
   const isRecall = kind === "RECALL"
-  const noun = isRecall ? "recall" : "MCQ exam"
+  const isMcqBank = kind === "MCQ_BANK"
+  const isViewOnly = isRecall || isMcqBank
+  const noun = isRecall ? "recall" : isMcqBank ? "MCQs paper" : "Mock Exam"
 
   async function addQuestion(payload: QuestionPayload) {
     await api.post(`/${basePath}/${id}/questions`, payload)
@@ -47,7 +53,7 @@ export function MockExamManagePage({ basePath = "mock-exams", kind = "MCQ" as Te
     questions.reload()
   }
   async function removeQuestion(qid: number) {
-    if (!confirm("Delete this question?")) return
+    if (!(await confirm("Delete this question? This cannot be undone."))) return
     try { await api.delete(`/${basePath}/${id}/questions/${qid}`); questions.reload(); mock.reload() }
     catch (e) { toast.error(errorMessage(e)) }
   }
@@ -56,10 +62,10 @@ export function MockExamManagePage({ basePath = "mock-exams", kind = "MCQ" as Te
   if (mock.error) return <ErrorState message={mock.error} />
   const m = mock.data!
 
-  const meta = (isRecall
+  const meta = (isViewOnly
     ? [
         m.subjectName,
-        m.examYear ? `${m.examYear}` : null,
+        isRecall && m.examYear ? `${m.examYear}` : null,
         `${m.questionCount} questions`,
         m.published ? "published" : "draft",
       ]
@@ -145,7 +151,8 @@ export function MockExamManagePage({ basePath = "mock-exams", kind = "MCQ" as Te
         <EditSettingsDialog
           mock={m}
           basePath={basePath}
-          isRecall={isRecall}
+          isViewOnly={isViewOnly}
+          hasYear={isRecall}
           noun={noun}
           onClose={() => setEditOpen(false)}
           onSaved={() => { setEditOpen(false); mock.reload() }}
@@ -156,11 +163,12 @@ export function MockExamManagePage({ basePath = "mock-exams", kind = "MCQ" as Te
 }
 
 function EditSettingsDialog({
-  mock, basePath, isRecall, noun, onClose, onSaved,
+  mock, basePath, isViewOnly, hasYear, noun, onClose, onSaved,
 }: {
   mock: MockExamResponse
   basePath: string
-  isRecall: boolean
+  isViewOnly: boolean
+  hasYear: boolean
   noun: string
   onClose: () => void
   onSaved: () => void
@@ -181,12 +189,12 @@ function EditSettingsDialog({
   async function save() {
     setSaving(true)
     try {
-      const body: Record<string, unknown> = isRecall
+      const body: Record<string, unknown> = isViewOnly
         ? {
             title: form.title,
             description: form.description,
             subjectId: form.subjectId,
-            examYear: form.examYear,
+            ...(hasYear ? { examYear: form.examYear } : {}),
           }
         : {
             title: form.title,
@@ -208,7 +216,7 @@ function EditSettingsDialog({
         <DialogHeader><DialogTitle>Edit {noun} settings</DialogTitle></DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2"><Label>Title</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
-          <div className={"grid gap-3 " + (isRecall ? "grid-cols-2" : "grid-cols-1")}>
+          <div className={"grid gap-3 " + (hasYear ? "grid-cols-2" : "grid-cols-1")}>
             <div className="space-y-2">
               <Label>Subject</Label>
               <select
@@ -220,7 +228,7 @@ function EditSettingsDialog({
                 {(subjects.data ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
-            {isRecall && (
+            {hasYear && (
               <div className="space-y-2">
                 <Label>Exam year</Label>
                 <Input type="number" min={1950} max={2100} value={form.examYear} onChange={(e) => setForm({ ...form, examYear: Number(e.target.value) })} />
@@ -229,7 +237,7 @@ function EditSettingsDialog({
           </div>
           <div className="space-y-2"><Label>Description</Label><Textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
 
-          {!isRecall && (
+          {!isViewOnly && (
             <>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2"><Label>Pass mark %</Label><Input type="number" min={0} max={100} value={form.passMarkPercent} onChange={(e) => setForm({ ...form, passMarkPercent: Number(e.target.value) })} /></div>

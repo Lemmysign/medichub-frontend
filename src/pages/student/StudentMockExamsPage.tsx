@@ -35,7 +35,7 @@ export function StudentMockExamsPage() {
       <SubjectFilter subjects={subjects.data ?? []} value={subjectId} onChange={(v) => { setSubjectId(v); setPage(0) }} />
 
       {loading ? <CenteredSpinner /> : error ? <ErrorState message={error} /> : mocks.length === 0 ? (
-        <EmptyState title="No MCQ exams available yet" description="Check back soon — new exams are added regularly." />
+        <EmptyState title="No mock exams available yet" description="Check back soon — new exams are added regularly." />
       ) : (
         <>
           <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">

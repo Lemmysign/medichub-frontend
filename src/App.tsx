@@ -17,17 +17,15 @@ import { CoursePlayerPage } from "@/pages/student/CoursePlayerPage"
 import { TestTakePage } from "@/pages/student/TestTakePage"
 import { SubscriptionPage } from "@/pages/student/SubscriptionPage"
 import { StudentMockExamsPage } from "@/pages/student/StudentMockExamsPage"
-import { StudentMcqListPage } from "@/pages/student/StudentMcqListPage"
-import { StudentMcqPracticePage } from "@/pages/student/StudentMcqPracticePage"
-import { StudentStudyListPage } from "@/pages/student/StudentStudyListPage"
-import { StudentStudyViewPage } from "@/pages/student/StudentStudyViewPage"
-import { StudyManagePage } from "@/pages/study/StudyManagePage"
+import { StudentMcqsPage } from "@/pages/student/StudentMcqsPage"
+import { StudentMcqViewPage } from "@/pages/student/StudentMcqViewPage"
 import { StudentRecallsPage } from "@/pages/student/StudentRecallsPage"
 import { StudentRecallViewPage } from "@/pages/student/StudentRecallViewPage"
 import { MockExamRunPage } from "@/pages/student/MockExamRunPage"
 import { MockExamsListPage } from "@/pages/mock/MockExamsListPage"
 import { MockExamManagePage } from "@/pages/mock/MockExamManagePage"
 import { RecallsListPage } from "@/pages/recall/RecallsListPage"
+import { McqsListPage } from "@/pages/mcq/McqsListPage"
 
 import { InstructorDashboardPage } from "@/pages/instructor/InstructorDashboardPage"
 import { InstructorCoursesPage } from "@/pages/instructor/InstructorCoursesPage"
@@ -55,7 +53,7 @@ function App() {
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-      {/* Root → app entry. This is the app (app.medichubacademy.com); marketing lives on the
+      {/* Root → app entry. This is the app (portal.passmdcn.com); marketing lives on the
           separate Pass MDCN site. LoginPage bounces already-authenticated users to their dashboard. */}
       <Route path="/" element={<Navigate to="/login" replace />} />
 
@@ -76,10 +74,8 @@ function App() {
           <Route path="/student/courses/:courseId/tests/:testId" element={<TestTakePage />} />
           <Route path="/student/mock-exams" element={<StudentMockExamsPage />} />
           <Route path="/student/mock-exams/:id" element={<MockExamRunPage />} />
-          <Route path="/student/mcq" element={<StudentMcqListPage />} />
-          <Route path="/student/mcq/:id" element={<StudentMcqPracticePage />} />
-          <Route path="/student/study" element={<StudentStudyListPage />} />
-          <Route path="/student/study/:id" element={<StudentStudyViewPage />} />
+          <Route path="/student/mcqs" element={<StudentMcqsPage />} />
+          <Route path="/student/mcqs/:id" element={<StudentMcqViewPage />} />
           <Route path="/student/recalls" element={<StudentRecallsPage />} />
           <Route path="/student/recalls/:id" element={<StudentRecallViewPage />} />
           <Route path="/student/subscription" element={<SubscriptionPage />} />
@@ -96,7 +92,8 @@ function App() {
           <Route path="/instructor/mock-exams/:id" element={<MockExamManagePage />} />
           <Route path="/instructor/recalls" element={<RecallsListPage basePath="/instructor/recalls" />} />
           <Route path="/instructor/recalls/:id" element={<MockExamManagePage basePath="recalls" kind="RECALL" />} />
-          <Route path="/instructor/study" element={<StudyManagePage />} />
+          <Route path="/instructor/mcqs" element={<McqsListPage basePath="/instructor/mcqs" />} />
+          <Route path="/instructor/mcqs/:id" element={<MockExamManagePage basePath="mcqs" kind="MCQ_BANK" />} />
           <Route path="/instructor/questions" element={<InstructorQuestionsPage />} />
         </Route>
       </Route>
@@ -111,7 +108,8 @@ function App() {
           <Route path="/admin/mock-exams/:id" element={<MockExamManagePage />} />
           <Route path="/admin/recalls" element={<RecallsListPage basePath="/admin/recalls" />} />
           <Route path="/admin/recalls/:id" element={<MockExamManagePage basePath="recalls" kind="RECALL" />} />
-          <Route path="/admin/study" element={<StudyManagePage />} />
+          <Route path="/admin/mcqs" element={<McqsListPage basePath="/admin/mcqs" />} />
+          <Route path="/admin/mcqs/:id" element={<MockExamManagePage basePath="mcqs" kind="MCQ_BANK" />} />
           <Route path="/admin/subjects" element={<AdminSubjectsPage />} />
           <Route path="/admin/plan" element={<AdminPlanPage />} />
           <Route path="/admin/settings" element={<AdminSettingsPage />} />

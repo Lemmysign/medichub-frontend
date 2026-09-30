@@ -42,7 +42,7 @@ export function AdminLoginPage() {
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="email">Email address</Label>
-          <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@medichubacademy.com" />
+          <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@passmdcn.com" />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="password">Password</Label>

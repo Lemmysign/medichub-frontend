@@ -1,6 +1,7 @@
 import type { ReactNode } from "react"
 import { Link } from "react-router-dom"
-import { Stethoscope, ShieldCheck } from "lucide-react"
+import { ShieldCheck } from "lucide-react"
+import { LogoMark } from "@/components/Logo"
 
 interface Quote {
   text: string
@@ -42,9 +43,7 @@ export function AuthShell({
           style={{ backgroundImage: "radial-gradient(circle at 70% 30%, white 0%, transparent 60%)" }}
         />
         <Link to="/" className="relative flex items-center gap-2.5">
-          <div className="flex size-9 items-center justify-center rounded-lg bg-white/20">
-            <Stethoscope size={18} className="text-white" />
-          </div>
+          <LogoMark size={36} />
           <div className="leading-none">
             <div className="font-800 text-base tracking-tight text-white">MedicHub</div>
             <div className="font-600 text-[9px] uppercase tracking-widest text-white/70">Academy</div>
@@ -89,9 +88,7 @@ export function AuthShell({
       <div className="flex flex-1 items-center justify-center p-6">
         <div className="w-full max-w-sm">
           <Link to="/" className="mb-8 flex items-center gap-2 lg:hidden">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-primary">
-              <Stethoscope size={15} className="text-primary-foreground" />
-            </div>
+            <LogoMark size={32} />
             <span className="font-800 text-sm">MedicHub Academy</span>
           </Link>
 

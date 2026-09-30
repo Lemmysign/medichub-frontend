@@ -2,10 +2,11 @@ import { NavLink } from "react-router-dom"
 import {
   LayoutDashboard, BookOpen, Library, ClipboardList, CreditCard,
   Settings, MessageSquare, Users, ChevronLeft, ChevronRight,
-  Activity, LogOut, Stethoscope, History, Tags, UserCheck, ListChecks, BookOpenText,
+  Activity, LogOut, History, Tags, UserCheck, ListChecks,
 } from "lucide-react"
 import type { Role } from "@/lib/types"
 import { cn } from "@/lib/utils"
+import { LogoMark } from "@/components/Logo"
 
 interface NavItem {
   to: string
@@ -20,9 +21,8 @@ function navItems(role: Role): NavItem[] {
       { to: "/student", label: "Dashboard", icon: <LayoutDashboard size={18} />, end: true },
       { to: "/browse", label: "Browse Courses", icon: <BookOpen size={18} /> },
       { to: "/student/courses", label: "My Courses", icon: <Library size={18} /> },
-      { to: "/student/study", label: "Study", icon: <BookOpenText size={18} /> },
       { to: "/student/mock-exams", label: "Mock exam", icon: <ClipboardList size={18} /> },
-      { to: "/student/mcq", label: "MCQ", icon: <ListChecks size={18} /> },
+      { to: "/student/mcqs", label: "MCQs", icon: <ListChecks size={18} /> },
       { to: "/student/recalls", label: "Recalls", icon: <History size={18} /> },
       { to: "/student/subscription", label: "Subscription", icon: <CreditCard size={18} /> },
     ]
@@ -31,8 +31,8 @@ function navItems(role: Role): NavItem[] {
     return [
       { to: "/instructor", label: "Dashboard", icon: <LayoutDashboard size={18} />, end: true },
       { to: "/instructor/courses", label: "My Courses", icon: <Library size={18} /> },
-      { to: "/instructor/study", label: "Study", icon: <BookOpenText size={18} /> },
-      { to: "/instructor/mock-exams", label: "MCQs", icon: <ClipboardList size={18} /> },
+      { to: "/instructor/mock-exams", label: "Mock Exam", icon: <ClipboardList size={18} /> },
+      { to: "/instructor/mcqs", label: "MCQs", icon: <ListChecks size={18} /> },
       { to: "/instructor/recalls", label: "Recalls", icon: <History size={18} /> },
       { to: "/instructor/questions", label: "Q&A Inbox", icon: <MessageSquare size={18} /> },
     ]
@@ -41,8 +41,8 @@ function navItems(role: Role): NavItem[] {
     { to: "/admin", label: "Dashboard", icon: <LayoutDashboard size={18} />, end: true },
     { to: "/admin/users", label: "Accounts", icon: <Users size={18} /> },
     { to: "/admin/approvals", label: "Approvals", icon: <UserCheck size={18} /> },
-    { to: "/admin/study", label: "Study", icon: <BookOpenText size={18} /> },
-    { to: "/admin/mock-exams", label: "MCQs", icon: <ClipboardList size={18} /> },
+    { to: "/admin/mock-exams", label: "Mock Exam", icon: <ClipboardList size={18} /> },
+    { to: "/admin/mcqs", label: "MCQs", icon: <ListChecks size={18} /> },
     { to: "/admin/recalls", label: "Recalls", icon: <History size={18} /> },
     { to: "/admin/subjects", label: "Subjects", icon: <Tags size={18} /> },
     { to: "/admin/plan", label: "Plan", icon: <CreditCard size={18} /> },
@@ -79,9 +79,7 @@ export function Sidebar({ role, collapsed, userName, userEmail, onToggleCollapse
     >
       {/* Logo */}
       <div className="flex h-14 shrink-0 items-center gap-3 border-b border-border px-4">
-        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-          <Stethoscope size={16} />
-        </div>
+        <LogoMark size={32} />
         {!collapsed && (
           <div className="flex flex-col leading-none">
             <span className="font-800 text-sm tracking-tight text-foreground">MedicHub</span>

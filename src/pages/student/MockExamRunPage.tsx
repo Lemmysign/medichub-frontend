@@ -68,14 +68,11 @@ function pageWindow(current: number, total: number): (number | "…")[] {
   return out
 }
 
-/**
- * Full-screen exam runner, reused for MCQs ({@code basePath="student/mock-exams"}) and
- * Recalls ({@code basePath="student/recalls"}). All take endpoints share the same shape.
- */
+/** Full-screen Mock Exam runner (timed/graded, taken at {@code basePath="student/mock-exams"}). */
 export function MockExamRunPage({
   basePath = "student/mock-exams",
   backTo = "/student/mock-exams",
-  backLabel = "MCQs",
+  backLabel = "Mock Exam",
   eyebrow = "Mock examination",
 }: {
   basePath?: string

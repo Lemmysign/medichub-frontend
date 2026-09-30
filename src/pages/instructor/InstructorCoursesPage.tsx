@@ -3,6 +3,7 @@ import { Link } from "react-router-dom"
 import { toast } from "sonner"
 import { api, errorMessage } from "@/lib/api"
 import { useApi } from "@/hooks/useApi"
+import { useConfirm } from "@/components/ConfirmDialogProvider"
 import type { CourseResponse, PagedResponse } from "@/lib/types"
 import { PageHeader, CenteredSpinner, ErrorState, EmptyState } from "@/components/common"
 import { Pagination } from "@/components/ui/pagination"
@@ -23,6 +24,7 @@ export function InstructorCoursesPage() {
     () => api.get<PagedResponse<CourseResponse>>("/instructor/courses", { params: { page, size: 12 } }).then((r) => r.data),
     [page],
   )
+  const confirm = useConfirm()
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState({ title: "", description: "" })
   const [saving, setSaving] = useState(false)
@@ -52,7 +54,7 @@ export function InstructorCoursesPage() {
   }
 
   async function remove(c: CourseResponse) {
-    if (!confirm(`Delete "${c.title}"? This cannot be undone.`)) return
+    if (!(await confirm(`Delete "${c.title}"? This cannot be undone.`))) return
     try {
       await api.delete(`/instructor/courses/${c.id}`)
       toast.success("Course deleted")

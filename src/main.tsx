@@ -5,14 +5,22 @@ import "./index.css"
 import App from "./App.tsx"
 import { AuthProvider } from "@/context/AuthContext"
 import { Toaster } from "@/components/ui/sonner"
+import { ConfirmDialogProvider } from "@/components/ConfirmDialogProvider"
+import { ErrorBoundary } from "@/components/ErrorBoundary"
+import { CopyProtection } from "@/components/CopyProtection"
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
-        <App />
-        <Toaster richColors position="top-right" />
-      </AuthProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AuthProvider>
+          <ConfirmDialogProvider>
+            <CopyProtection />
+            <App />
+            <Toaster richColors position="top-right" />
+          </ConfirmDialogProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   </StrictMode>,
 )

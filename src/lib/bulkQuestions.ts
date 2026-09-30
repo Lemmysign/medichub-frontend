@@ -10,6 +10,9 @@ export interface ParsedQuestion {
   options: { text: string; correct: boolean }[]
 }
 
+/** True if the image column holds a real URL rather than a bare filename (picture mode). */
+export const isImageUrl = (v: string) => /^https?:\/\//i.test(v)
+
 export interface ParsedRow {
   /** 1-based row number as it appears in the spreadsheet (header excluded). */
   row: number
@@ -113,4 +116,33 @@ export function downloadTemplate() {
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, "Questions")
   XLSX.writeFile(wb, "medichub-questions-template.xlsx")
+}
+
+/**
+ * Same template, but the `imageUrl` column takes a bare filename (e.g. "q1.jpg") instead of a
+ * URL — the instructor selects the matching image files alongside the spreadsheet, and each is
+ * uploaded to Cloudinary automatically, with the resulting URL substituted before import.
+ */
+export function downloadPictureTemplate() {
+  const header = [
+    "text", "type", "explanation", "imageUrl (filename)",
+    "option1", "correct1", "option2", "correct2", "option3", "correct3", "option4", "correct4",
+  ]
+  const examples = [
+    ["Which nerve is indicated by the arrow?", "SINGLE_CHOICE", "The arrow points to the median nerve.", "q1.jpg",
+      "Median nerve", "TRUE", "Ulnar nerve", "FALSE", "Radial nerve", "FALSE", "Axillary nerve", "FALSE"],
+    ["What abnormality is shown on this chest X-ray?", "SINGLE_CHOICE", "Right-sided pleural effusion — note the blunted costophrenic angle.", "q2.png",
+      "Pleural effusion", "TRUE", "Pneumothorax", "FALSE", "Consolidation", "FALSE", "Cardiomegaly", "FALSE"],
+  ]
+  const ws = XLSX.utils.aoa_to_sheet([header, ...examples])
+  ws["!cols"] = [{ wch: 40 }, { wch: 16 }, { wch: 36 }, { wch: 20 }, ...Array(8).fill({ wch: 14 })]
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, "Questions")
+  XLSX.writeFile(wb, "medichub-picture-questions-template.xlsx")
+}
+
+/** Finds the selected {@link File} whose name matches (case-insensitively) the given reference. */
+export function findImageFile(filename: string, files: File[]): File | undefined {
+  const needle = filename.trim().toLowerCase()
+  return files.find((f) => f.name.toLowerCase() === needle)
 }

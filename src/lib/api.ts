@@ -4,6 +4,12 @@ import type { ApiError } from "./types"
 const ACCESS_KEY = "mh_access_token"
 const REFRESH_KEY = "mh_refresh_token"
 
+// Local dev: falls back to "/api", proxied to the backend by vite.config.ts. Production (the
+// frontend and backend are on separate domains — portal.passmdcn.com / portalapi.passmdcn.com —
+// so there's no same-origin proxy): set VITE_API_URL at build time, e.g.
+// VITE_API_URL=https://portalapi.passmdcn.com/api
+const API_BASE_URL = import.meta.env.VITE_API_URL || "/api"
+
 export const tokenStore = {
   get access() {
     return localStorage.getItem(ACCESS_KEY)
@@ -22,7 +28,7 @@ export const tokenStore = {
 }
 
 export const api = axios.create({
-  baseURL: "/api",
+  baseURL: API_BASE_URL,
   headers: { "Content-Type": "application/json" },
 })
 
@@ -43,7 +49,7 @@ async function doRefresh(): Promise<string | null> {
   if (!refresh) return null
   try {
     // Bare axios (not `api`) so we don't loop through this interceptor.
-    const res = await axios.post("/api/auth/refresh", { refreshToken: refresh })
+    const res = await axios.post(`${API_BASE_URL}/auth/refresh`, { refreshToken: refresh })
     tokenStore.set(res.data.accessToken, res.data.refreshToken)
     return res.data.accessToken as string
   } catch {

@@ -149,6 +149,27 @@
   }
 }
 
+/*
+ * Content protection: students can't select/copy course text (MCQs, recalls, explanations).
+ * Form fields stay selectable/editable — this only blocks copying rendered content, not typing.
+ */
+body {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+input, textarea, [contenteditable="true"], [contenteditable=""] {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  user-select: text;
+}
+/* Escape hatch for any element that should stay copyable (e.g. a support/contact email). */
+.selectable {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  user-select: text;
+}
+
 @layer utilities {
   /* Numeric font-weight helpers so ported design markup works verbatim */
   .font-500 { font-weight: 500; }

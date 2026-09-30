@@ -2,6 +2,7 @@ import { useState } from "react"
 import { toast } from "sonner"
 import { api, errorMessage } from "@/lib/api"
 import { useApi } from "@/hooks/useApi"
+import { useConfirm } from "@/components/ConfirmDialogProvider"
 import type { PagedResponse, PendingInstructorResponse } from "@/lib/types"
 import { PageHeader, CenteredSpinner, ErrorState, EmptyState } from "@/components/common"
 import { Card } from "@/components/ui/card"
@@ -17,9 +18,10 @@ export function AdminApprovalsPage() {
     [page],
   )
   const [busy, setBusy] = useState<number | null>(null)
+  const confirm = useConfirm()
 
   async function act(u: PendingInstructorResponse, action: "approve" | "reject") {
-    if (action === "reject" && !confirm(`Reject and disable ${u.fullName}'s instructor account?`)) return
+    if (action === "reject" && !(await confirm(`Reject and disable ${u.fullName}'s instructor account?`, { confirmLabel: "Reject" }))) return
     setBusy(u.id)
     try {
       await api.post(`/admin/instructors/${u.id}/${action}`)

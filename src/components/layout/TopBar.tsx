@@ -9,24 +9,23 @@ import { cn } from "@/lib/utils"
 /** Ordered longest-prefix-first so nested routes win. */
 const TITLES: [string, string][] = [
   ["/student/mock-exams", "Mock exam"],
-  ["/student/mcq", "MCQ"],
-  ["/student/study", "Study"],
+  ["/student/mcqs", "MCQs"],
   ["/student/recalls", "Recalls"],
   ["/student/courses", "My Courses"],
   ["/student/subscription", "Subscription"],
   ["/student", "Dashboard"],
   ["/browse", "Browse Courses"],
   ["/instructor/courses", "My Courses"],
-  ["/instructor/mock-exams", "MCQs"],
+  ["/instructor/mock-exams", "Mock Exam"],
+  ["/instructor/mcqs", "MCQs"],
   ["/instructor/recalls", "Recalls"],
-  ["/instructor/study", "Study"],
   ["/instructor/questions", "Q&A Inbox"],
   ["/instructor", "Dashboard"],
   ["/admin/users", "Accounts"],
   ["/admin/approvals", "Instructor Approvals"],
-  ["/admin/mock-exams", "MCQs"],
+  ["/admin/mock-exams", "Mock Exam"],
+  ["/admin/mcqs", "MCQs"],
   ["/admin/recalls", "Recalls"],
-  ["/admin/study", "Study"],
   ["/admin/subjects", "Subjects"],
   ["/admin/plan", "Subscription Plan"],
   ["/admin/settings", "Platform Settings"],
@@ -77,7 +76,7 @@ export function TopBar({ role, darkMode, onToggleDark, onToggleSidebar }: Props)
         {role === "STUDENT" && sub.data && (
           <span
             className={cn(
-              "font-700 mr-1 hidden items-center gap-1 rounded-full px-2.5 py-1 text-[10px] uppercase tracking-widest sm:inline-flex",
+              "font-700 mr-1 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] uppercase tracking-widest",
               sub.data.active ? "bg-success/15 text-success" : "bg-destructive/12 text-destructive",
             )}
           >

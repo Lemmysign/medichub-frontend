@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
 import { api, errorMessage } from "@/lib/api"
 import { useApi } from "@/hooks/useApi"
+import { useConfirm } from "@/components/ConfirmDialogProvider"
 import type { InitializeSubscriptionResponse, SubscriptionPlanResponse, SubscriptionStatusResponse } from "@/lib/types"
 import { PageHeader, CenteredSpinner, ErrorState, formatNaira } from "@/components/common"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -15,6 +16,8 @@ export function SubscriptionPage() {
   const status = useApi(() => api.get<SubscriptionStatusResponse>("/student/subscription").then((r) => r.data), [])
   const plan = useApi(() => api.get<SubscriptionPlanResponse>("/public/subscription-plan").then((r) => r.data).catch(() => null), [])
   const [starting, setStarting] = useState(false)
+  const [cancelling, setCancelling] = useState(false)
+  const confirm = useConfirm()
 
   // Handle the Paystack callback (?reference=...) after checkout.
   useEffect(() => {
@@ -46,10 +49,30 @@ export function SubscriptionPage() {
     }
   }
 
+  async function cancelSubscription() {
+    const endDateText = s.endDate ? new Date(s.endDate).toLocaleDateString() : "your current period's end"
+    const ok = await confirm(
+      `You'll keep full access until ${endDateText}. After that, you won't be charged again and access will end unless you resubscribe.`,
+      { title: "Cancel auto-renewal?", confirmLabel: "Cancel auto-renewal", cancelLabel: "Keep subscription" },
+    )
+    if (!ok) return
+    setCancelling(true)
+    try {
+      await api.post("/student/subscription/cancel")
+      toast.success("Auto-renewal cancelled — you're still covered until your period ends.")
+      status.reload()
+    } catch (e) {
+      toast.error(errorMessage(e, "Could not cancel right now"))
+    } finally {
+      setCancelling(false)
+    }
+  }
+
   if (status.loading) return <CenteredSpinner />
   if (status.error) return <ErrorState message={status.error} />
   const s = status.data!
   const p = plan.data
+  const endDateText = s.endDate ? new Date(s.endDate).toLocaleDateString() : "—"
 
   return (
     <>
@@ -62,7 +85,12 @@ export function SubscriptionPage() {
             <div>
               <p className="font-medium">Your subscription is active</p>
               <p className="text-sm text-muted-foreground">
-                {s.planName} • renews/expires {s.endDate ? new Date(s.endDate).toLocaleDateString() : "—"}
+                {s.planName} •{" "}
+                {s.cancelAtPeriodEnd
+                  ? `cancelled — access ends ${endDateText}`
+                  : s.autoRenews
+                    ? `auto-renews ${endDateText}`
+                    : `expires ${endDateText}`}
               </p>
             </div>
           </div>
@@ -85,14 +113,36 @@ export function SubscriptionPage() {
                 <span className="text-base font-normal text-muted-foreground"> / {p.intervalDays} days</span>
               </p>
               <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-success" /> Access to all courses</li>
-                <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-success" /> All mock tests & materials</li>
-                <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-success" /> Progress tracking & Q&A</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-success" /> Full access to every course & video</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-success" /> Timed mock exams with instant grading</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-success" /> MCQs practice bank by subject</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-success" /> Recalls - past exam questions with explained answers</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-success" /> Downloadable course materials</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-success" /> Progress tracking on every course</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-success" /> Full test attempt history & scores</li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-success" /> Ask-the-instructor Q&A on any course</li>
               </ul>
               <Button className="mt-6 w-full" onClick={subscribe} disabled={starting || s.active}>
                 {starting && <Loader2 className="mr-2 size-4 animate-spin" />}
                 {s.active ? "Subscribed" : "Subscribe with Paystack"}
               </Button>
+
+              {s.active && s.autoRenews && !s.cancelAtPeriodEnd && (
+                <Button
+                  variant="ghost"
+                  className="mt-2 w-full text-muted-foreground hover:text-destructive"
+                  onClick={cancelSubscription}
+                  disabled={cancelling}
+                >
+                  {cancelling && <Loader2 className="mr-2 size-4 animate-spin" />}
+                  Cancel auto-renewal
+                </Button>
+              )}
+              {s.active && s.cancelAtPeriodEnd && (
+                <p className="mt-3 text-center text-xs text-muted-foreground">
+                  Auto-renewal cancelled. You keep access until {endDateText}.
+                </p>
+              )}
             </>
           ) : (
             <p className="text-sm text-muted-foreground">No plan is configured yet. Please check back soon.</p>

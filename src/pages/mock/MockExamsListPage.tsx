@@ -4,6 +4,7 @@ import { toast } from "sonner"
 import { api, errorMessage } from "@/lib/api"
 import { useApi } from "@/hooks/useApi"
 import { useSubjects } from "@/hooks/useSubjects"
+import { useConfirm } from "@/components/ConfirmDialogProvider"
 import type { FeedbackMode, MockExamResponse, PagedResponse } from "@/lib/types"
 import { PageHeader, CenteredSpinner, ErrorState, EmptyState } from "@/components/common"
 import { Pagination } from "@/components/ui/pagination"
@@ -18,6 +19,7 @@ import { Clock, ClipboardList, FileQuestion, Loader2, Plus, Tag, Target, Trash2 
 
 export function MockExamsListPage() {
   const subjects = useSubjects()
+  const confirm = useConfirm()
   const [subjectId, setSubjectId] = useState<number | null>(null)
   const [page, setPage] = useState(0)
   const { data, loading, error, reload } = useApi(
@@ -40,7 +42,7 @@ export function MockExamsListPage() {
         feedbackMode: form.feedbackMode,
         subjectId: form.subjectId,
       })
-      toast.success("MCQ exam created")
+      toast.success("Mock exam created")
       setOpen(false)
       setForm(emptyForm)
       reload()
@@ -51,7 +53,7 @@ export function MockExamsListPage() {
     catch (e) { toast.error(errorMessage(e)) }
   }
   async function remove(m: MockExamResponse) {
-    if (!confirm(`Delete "${m.title}"?`)) return
+    if (!(await confirm(`Delete "${m.title}"? This cannot be undone.`))) return
     try { await api.delete(`/mock-exams/${m.id}`); toast.success("Deleted"); reload() }
     catch (e) { toast.error(errorMessage(e)) }
   }
@@ -59,13 +61,13 @@ export function MockExamsListPage() {
   return (
     <>
       <PageHeader
-        title="MCQs"
+        title="Mock Exam"
         description="Subject-tagged practice exams for subscribers — auto-graded, timed or self-paced"
         action={
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button><Plus className="mr-2 size-4" /> New MCQ exam</Button></DialogTrigger>
+            <DialogTrigger asChild><Button><Plus className="mr-2 size-4" /> New Mock Exam</Button></DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle>Create MCQ exam</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>Create Mock Exam</DialogTitle></DialogHeader>
               <div className="space-y-4">
                 <div className="space-y-2"><Label>Title</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
                 <div className="space-y-2">
@@ -116,7 +118,7 @@ export function MockExamsListPage() {
       <SubjectFilter subjects={subjects.data ?? []} value={subjectId} onChange={(v) => { setSubjectId(v); setPage(0) }} />
 
       {loading ? <CenteredSpinner /> : error ? <ErrorState message={error} /> : !data || data.content.length === 0 ? (
-        <EmptyState title="No MCQ exams yet" description="Create one and add questions, then publish it for subscribers." />
+        <EmptyState title="No mock exams yet" description="Create one and add questions, then publish it for subscribers." />
       ) : (
         <div className="grid gap-5 sm:grid-cols-2">
           {data.content.map((m) => (
@@ -170,7 +172,7 @@ export function MockExamsListPage() {
   )
 }
 
-/** Subject dropdown filter shared by the MCQ and student MCQ lists. */
+/** Subject dropdown filter shared by the Mock Exam and student Mock Exam lists. */
 export function SubjectFilter({
   subjects, value, onChange,
 }: {
