@@ -3,6 +3,7 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "@/context/AuthContext"
 import { Sidebar } from "@/components/layout/Sidebar"
 import { TopBar } from "@/components/layout/TopBar"
+import { CopyProtection } from "@/components/CopyProtection"
 import { cn } from "@/lib/utils"
 
 export function AppLayout() {
@@ -38,7 +39,8 @@ export function AppLayout() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="copy-protected flex h-screen overflow-hidden bg-background">
+      <CopyProtection />
       {/* Mobile overlay */}
       {mobileOpen && (
         <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={() => setMobileOpen(false)} />

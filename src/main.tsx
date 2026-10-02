@@ -7,7 +7,6 @@ import { AuthProvider } from "@/context/AuthContext"
 import { Toaster } from "@/components/ui/sonner"
 import { ConfirmDialogProvider } from "@/components/ConfirmDialogProvider"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
-import { CopyProtection } from "@/components/CopyProtection"
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -15,7 +14,6 @@ createRoot(document.getElementById("root")!).render(
       <BrowserRouter>
         <AuthProvider>
           <ConfirmDialogProvider>
-            <CopyProtection />
             <App />
             <Toaster richColors position="top-right" />
           </ConfirmDialogProvider>

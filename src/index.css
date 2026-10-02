@@ -151,9 +151,11 @@
 
 /*
  * Content protection: students can't select/copy course text (MCQs, recalls, explanations).
+ * Scoped to the authenticated dashboard shell (.copy-protected, applied in AppLayout) — public
+ * pages like login/register/forgot-password have nothing to protect and should behave normally.
  * Form fields stay selectable/editable — this only blocks copying rendered content, not typing.
  */
-body {
+.copy-protected {
   -webkit-user-select: none;
   -moz-user-select: none;
   user-select: none;
