@@ -6,23 +6,21 @@ import { useSubjects } from "@/hooks/useSubjects"
 import type { PagedResponse, RecallSummaryResponse } from "@/lib/types"
 import { PageHeader, CenteredSpinner, ErrorState, EmptyState } from "@/components/common"
 import { Pagination } from "@/components/ui/pagination"
-import { ArrowUpRight, Calendar, FileQuestion, History, Tag } from "lucide-react"
+import { ArrowUpRight, FileQuestion, History, Tag } from "lucide-react"
 
 const selectCls =
   "h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs focus:outline-none focus:ring-2 focus:ring-ring/40"
 
 export function StudentRecallsPage() {
   const subjects = useSubjects()
-  const years = useApi(() => api.get<number[]>("/student/recalls/years").then((r) => r.data), [])
   const [subjectId, setSubjectId] = useState<number | "">("")
-  const [year, setYear] = useState<number | "">("")
   const [page, setPage] = useState(0)
 
   const { data, loading, error } = useApi(
     () => api.get<PagedResponse<RecallSummaryResponse>>("/student/recalls", {
-      params: { page, size: 12, subjectId: subjectId || undefined, examYear: year || undefined },
+      params: { page, size: 12, subjectId: subjectId || undefined },
     }).then((r) => r.data),
-    [page, subjectId, year],
+    [page, subjectId],
   )
   const papers = data?.content ?? []
 
@@ -34,7 +32,7 @@ export function StudentRecallsPage() {
       />
 
       {/* Filters — dropdowns */}
-      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:max-w-xl">
+      <div className="mb-6 max-w-xs">
         <div>
           <label className="mb-1 flex items-center gap-1 text-xs font-600 text-muted-foreground"><Tag className="size-3.5" /> Subject</label>
           <select className={selectCls} value={subjectId} onChange={(e) => { setSubjectId(e.target.value ? Number(e.target.value) : ""); setPage(0) }}>
@@ -42,17 +40,10 @@ export function StudentRecallsPage() {
             {(subjects.data ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </div>
-        <div>
-          <label className="mb-1 flex items-center gap-1 text-xs font-600 text-muted-foreground"><Calendar className="size-3.5" /> Year</label>
-          <select className={selectCls} value={year} onChange={(e) => { setYear(e.target.value ? Number(e.target.value) : ""); setPage(0) }}>
-            <option value="">All years</option>
-            {(years.data ?? []).map((y) => <option key={y} value={y}>{y}</option>)}
-          </select>
-        </div>
       </div>
 
       {loading ? <CenteredSpinner /> : error ? <ErrorState message={error} /> : papers.length === 0 ? (
-        <EmptyState title="No recalls found" description="Try a different subject or year — or check back as more are added." />
+        <EmptyState title="No recalls found" description="Try a different subject — or check back as more are added." />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {papers.map((m) => (

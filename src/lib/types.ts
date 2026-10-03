@@ -240,6 +240,54 @@ export interface SubscriptionStatusResponse {
   cancelAtPeriodEnd: boolean
 }
 
+/** Which online gateways the backend has switched on (a gateway is on once its secret key is configured). */
+export interface PaymentOptionsResponse {
+  paystack: boolean
+  squad: boolean
+  /** Squad's in-page pop-up can be used (otherwise we send the student to Squad's own page). */
+  squadInline?: boolean
+}
+
+/** What the browser needs to open Squad's in-page pop-up for a payment the server already recorded. */
+export interface SquadCheckoutSession {
+  reference: string
+  amountKobo: number
+  currency: string
+  email: string
+  customerName: string
+  publicKey: string
+  passCharge: boolean
+}
+
+/** Outcome of one gateway payment when the browser returns from checkout. */
+export interface PaymentVerificationResponse {
+  outcome: "PAID" | "PENDING" | "FAILED"
+  subscription: SubscriptionStatusResponse
+}
+
+/** Admin's view of one student's subscription (manual grant / revoke). */
+export interface AdminStudentSubscriptionResponse {
+  studentId: number
+  studentName: string
+  studentEmail: string
+  active: boolean
+  status: SubscriptionStatus | null
+  startDate: string | null
+  endDate: string | null
+  autoRenews: boolean
+  /** Set when access was removed but Paystack billing could not be stopped automatically. */
+  warning: string | null
+}
+
+/** Bank-transfer details + where the student sends the receipt (alternative to Paystack). */
+export interface ManualPaymentInfoResponse {
+  bankName: string
+  accountName: string
+  accountNumber: string
+  whatsappNumbers: string[]
+  email: string
+}
+
 export interface SubscriptionPlanResponse {
   id: number
   name: string
