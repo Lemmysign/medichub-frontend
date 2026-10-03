@@ -26,13 +26,12 @@ export function RecallsListPage({ basePath }: { basePath: string }) {
   const subjects = useSubjects()
   const confirm = useConfirm()
   const [subjectId, setSubjectId] = useState<number | "">("")
-  const [year, setYear] = useState<number | "">("")
   const [page, setPage] = useState(0)
   const { data, loading, error, reload } = useApi(
     () => api.get<PagedResponse<MockExamResponse>>("/recalls", {
-      params: { page, size: 12, subjectId: subjectId || undefined, examYear: year || undefined },
+      params: { page, size: 12, subjectId: subjectId || undefined },
     }).then((r) => r.data),
-    [page, subjectId, year],
+    [page, subjectId],
   )
   const currentYear = new Date().getFullYear()
   const emptyForm = { title: "", description: "", subjectId: 0, examYear: currentYear }
@@ -108,17 +107,13 @@ export function RecallsListPage({ basePath }: { basePath: string }) {
       />
 
       {/* Filters — dropdowns */}
-      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:max-w-xl">
+      <div className="mb-6 max-w-xs">
         <div>
           <label className="mb-1 flex items-center gap-1 text-xs font-600 text-muted-foreground"><Tag className="size-3.5" /> Subject</label>
           <select className={selectCls} value={subjectId} onChange={(e) => { setSubjectId(e.target.value ? Number(e.target.value) : ""); setPage(0) }}>
             <option value="">All subjects</option>
             {(subjects.data ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
-        </div>
-        <div>
-          <label className="mb-1 flex items-center gap-1 text-xs font-600 text-muted-foreground"><Calendar className="size-3.5" /> Year</label>
-          <Input type="number" placeholder="All years" value={year} onChange={(e) => { setYear(e.target.value ? Number(e.target.value) : ""); setPage(0) }} />
         </div>
       </div>
 
