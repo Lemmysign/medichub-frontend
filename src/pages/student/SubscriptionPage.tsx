@@ -139,6 +139,21 @@ export function SubscriptionPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Every checkout start gets a number. If the student closes the chooser while one is still starting, the
+  // number moves on, and the late result is dropped: no pop-up opens and no redirect happens behind their back.
+  const attempt = useRef(0)
+  const CHECKOUT_TIMEOUT_MS = 30000
+
+  /** The student dismissed the chooser (the x, Esc, or a click outside): cancel whatever is starting. */
+  function onChooserOpenChange(open: boolean) {
+    setChooserOpen(open)
+    if (!open) {
+      attempt.current += 1
+      setStarting(false)
+      setStartingSquad(false)
+    }
+  }
+
   /** Close our chooser and give it a moment to release focus and scrolling, so a provider pop-up can take over. */
   async function closeChooser() {
     setChooserOpen(false)
@@ -146,13 +161,16 @@ export function SubscriptionPage() {
   }
 
   async function payWithPaystack() {
+    const mine = ++attempt.current
     setStarting(true)
     try {
-      const res = await api.post<InitializeSubscriptionResponse>("/student/subscription/initialize")
+      const res = await api.post<InitializeSubscriptionResponse>("/student/subscription/initialize", null, { timeout: CHECKOUT_TIMEOUT_MS })
+      if (attempt.current !== mine) return // the student closed the chooser while this was starting
       const { authorizationUrl, accessCode, reference } = res.data
       if (accessCode) {
         try {
           await closeChooser()
+          if (attempt.current !== mine) return
           await openPaystackPopup(accessCode, {
             onSuccess: (ref) => void confirmPaystack(ref || reference),
             onCancel: () => toast.message("Payment cancelled. You haven't been charged."),
@@ -164,20 +182,25 @@ export function SubscriptionPage() {
           // the pop-up couldn't open (blocked or offline): carry on to Paystack's own page
         }
       }
+      if (attempt.current !== mine) return
       window.location.href = authorizationUrl
     } catch (e) {
-      toast.error(errorMessage(e, "Could not start checkout"))
+      if (attempt.current !== mine) return
+      toast.error(errorMessage(e, "Could not start checkout. Please try again."))
       setStarting(false)
     }
   }
 
   async function payWithSquad() {
+    const mine = ++attempt.current
     setStartingSquad(true)
     try {
       if (options.data?.squadInline) {
-        const { data: session } = await api.post<SquadCheckoutSession>("/student/subscription/squad/prepare")
+        const { data: session } = await api.post<SquadCheckoutSession>("/student/subscription/squad/prepare", null, { timeout: CHECKOUT_TIMEOUT_MS })
+        if (attempt.current !== mine) return // the student closed the chooser while this was starting
         try {
           await closeChooser()
+          if (attempt.current !== mine) return
           await openSquadModal(session, {
             onSuccess: () => void confirmSquad(session.reference),
             onClose: () => void confirmSquad(session.reference, true),
@@ -188,10 +211,13 @@ export function SubscriptionPage() {
           // the pop-up couldn't open (blocked or offline): carry on to Squad's own page
         }
       }
-      const res = await api.post<InitializeSubscriptionResponse>("/student/subscription/squad/initialize")
+      if (attempt.current !== mine) return
+      const res = await api.post<InitializeSubscriptionResponse>("/student/subscription/squad/initialize", null, { timeout: CHECKOUT_TIMEOUT_MS })
+      if (attempt.current !== mine) return
       window.location.href = res.data.authorizationUrl
     } catch (e) {
-      toast.error(errorMessage(e, "Could not start checkout"))
+      if (attempt.current !== mine) return
+      toast.error(errorMessage(e, "Could not start checkout. Please try again."))
       setStartingSquad(false)
     }
   }
@@ -331,7 +357,7 @@ export function SubscriptionPage() {
       {p && (
         <PaymentMethodDialog
           open={chooserOpen}
-          onOpenChange={setChooserOpen}
+          onOpenChange={onChooserOpenChange}
           available={available}
           busy={busyGateway}
           onChoose={(g) => void startCheckout(g)}
