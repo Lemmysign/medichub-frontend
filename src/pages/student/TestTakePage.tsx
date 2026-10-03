@@ -16,6 +16,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle2, XCircle, Loader2, Lightbulb } from "lucide-react"
+import { scrollAppToTop } from "@/lib/scroll"
 
 /** Per-question reveal state: which option is correct, what the student picked, and the explanation. */
 interface Reveal {
@@ -85,7 +86,7 @@ export function TestTakePage() {
       const res = await api.post<AttemptDetailResponse>(`/student/courses/${courseId}/tests/${testId}/submit`, payload)
       setResult(res.data)
       attempts.reload()
-      window.scrollTo({ top: 0, behavior: "smooth" })
+      scrollAppToTop(true)
     } catch (e) {
       toast.error(errorMessage(e))
     } finally {

@@ -84,7 +84,7 @@ export function StudentMcqViewPage() {
               )
             })}
           </div>
-          {data && <Pagination page={data.page} totalPages={data.totalPages} onPage={(p) => { setPage(p); window.scrollTo(0, 0) }} />}
+          {data && <Pagination page={data.page} totalPages={data.totalPages} onPage={setPage} />}
         </>
       )}
     </div>

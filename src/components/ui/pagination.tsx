@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { scrollAppToTop } from "@/lib/scroll"
 
 /** Compact page window: 1 … cur-1 cur cur+1 … last (all 1-based). */
 function windowOf(current: number, total: number): (number | "…")[] {
@@ -35,9 +36,11 @@ export function Pagination({
 }) {
   if (totalPages <= 1) return null
   const cur = page + 1
+  // Changing page starts the reader at the top of the new page, not wherever they scrolled to.
+  const go = (p: number) => { onPage(p); scrollAppToTop() }
   return (
     <div className={cn("mt-6 flex items-center justify-center gap-1", className)}>
-      <Button variant="outline" size="sm" onClick={() => onPage(page - 1)} disabled={page <= 0}>
+      <Button variant="outline" size="sm" onClick={() => go(page - 1)} disabled={page <= 0}>
         <ChevronLeft className="size-4" />
       </Button>
       {windowOf(cur, totalPages).map((p, i) =>
@@ -46,7 +49,7 @@ export function Pagination({
         ) : (
           <button
             key={p}
-            onClick={() => onPage(p - 1)}
+            onClick={() => go(p - 1)}
             className={cn(
               "tabular size-8 rounded-md text-sm font-600 transition-colors",
               p === cur ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted",
@@ -56,7 +59,7 @@ export function Pagination({
           </button>
         ),
       )}
-      <Button variant="outline" size="sm" onClick={() => onPage(page + 1)} disabled={cur >= totalPages}>
+      <Button variant="outline" size="sm" onClick={() => go(page + 1)} disabled={cur >= totalPages}>
         <ChevronRight className="size-4" />
       </Button>
     </div>

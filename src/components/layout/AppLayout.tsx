@@ -72,7 +72,7 @@ export function AppLayout() {
           onToggleDark={() => setDark((d) => !d)}
           onToggleSidebar={() => setMobileOpen((v) => !v)}
         />
-        <main className="flex-1 overflow-auto bg-background">
+        <main id="app-scroll" className="flex-1 overflow-auto bg-background">
           <div className="mx-auto max-w-6xl p-4 sm:p-6 lg:p-8">
             <Outlet />
           </div>
