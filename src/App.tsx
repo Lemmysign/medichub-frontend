@@ -20,6 +20,9 @@ import { StudentMockExamsPage } from "@/pages/student/StudentMockExamsPage"
 import { StudentMcqsPage } from "@/pages/student/StudentMcqsPage"
 import { StudentMcqViewPage } from "@/pages/student/StudentMcqViewPage"
 import { StudentRecallsPage } from "@/pages/student/StudentRecallsPage"
+import { StudentOscePage } from "@/pages/student/StudentOscePage"
+import { CoursesComingSoonPage } from "@/pages/student/CoursesComingSoonPage"
+import { COURSES_READY } from "@/lib/featureFlags"
 import { StudentRecallViewPage } from "@/pages/student/StudentRecallViewPage"
 import { MockExamRunPage } from "@/pages/student/MockExamRunPage"
 import { MockExamsListPage } from "@/pages/mock/MockExamsListPage"
@@ -68,8 +71,8 @@ function App() {
       <Route element={<ProtectedRoute roles={["STUDENT"]} />}>
         <Route element={<AppLayout />}>
           <Route path="/student" element={<StudentDashboardPage />} />
-          <Route path="/browse" element={<BrowsePage />} />
-          <Route path="/student/courses" element={<MyCoursesPage />} />
+          <Route path="/browse" element={COURSES_READY ? <BrowsePage /> : <CoursesComingSoonPage variant="browse" />} />
+          <Route path="/student/courses" element={COURSES_READY ? <MyCoursesPage /> : <CoursesComingSoonPage variant="mine" />} />
           <Route path="/student/courses/:id" element={<CoursePlayerPage />} />
           <Route path="/student/courses/:courseId/tests/:testId" element={<TestTakePage />} />
           <Route path="/student/mock-exams" element={<StudentMockExamsPage />} />
@@ -78,6 +81,7 @@ function App() {
           <Route path="/student/mcqs/:id" element={<StudentMcqViewPage />} />
           <Route path="/student/recalls" element={<StudentRecallsPage />} />
           <Route path="/student/recalls/:id" element={<StudentRecallViewPage />} />
+          <Route path="/student/osce" element={<StudentOscePage />} />
           <Route path="/student/subscription" element={<SubscriptionPage />} />
         </Route>
       </Route>

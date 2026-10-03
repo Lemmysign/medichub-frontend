@@ -11,6 +11,7 @@ const TITLES: [string, string][] = [
   ["/student/mock-exams", "Mock exam"],
   ["/student/mcqs", "MCQs"],
   ["/student/recalls", "Recalls"],
+  ["/student/osce", "OSCE"],
   ["/student/courses", "My Courses"],
   ["/student/subscription", "Subscription"],
   ["/student", "Dashboard"],
