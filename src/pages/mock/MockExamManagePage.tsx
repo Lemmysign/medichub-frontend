@@ -3,7 +3,6 @@ import { Link, useParams } from "react-router-dom"
 import { toast } from "sonner"
 import { api, errorMessage } from "@/lib/api"
 import { useApi } from "@/hooks/useApi"
-import { useSubjects } from "@/hooks/useSubjects"
 import { useConfirm } from "@/components/ConfirmDialogProvider"
 import type { FeedbackMode, MockExamResponse, QuestionResponse, TestKind } from "@/lib/types"
 import { PageHeader, CenteredSpinner, ErrorState } from "@/components/common"
@@ -173,7 +172,6 @@ function EditSettingsDialog({
   onClose: () => void
   onSaved: () => void
 }) {
-  const subjects = useSubjects()
   const [form, setForm] = useState({
     title: mock.title,
     description: mock.description ?? "",
@@ -181,7 +179,6 @@ function EditSettingsDialog({
     timed: mock.durationMinutes != null,
     durationMinutes: mock.durationMinutes ?? 30,
     feedbackMode: mock.feedbackMode as FeedbackMode,
-    subjectId: mock.subjectId ?? 0,
   })
   const [saving, setSaving] = useState(false)
 
@@ -192,7 +189,6 @@ function EditSettingsDialog({
         ? {
             title: form.title,
             description: form.description,
-            subjectId: form.subjectId,
             // The year is no longer edited here; keep whatever an existing recall already has.
             ...(hasYear && mock.examYear != null ? { examYear: mock.examYear } : {}),
           }
@@ -202,7 +198,6 @@ function EditSettingsDialog({
             passMarkPercent: form.passMarkPercent,
             durationMinutes: form.timed ? form.durationMinutes : null,
             feedbackMode: form.feedbackMode,
-            subjectId: form.subjectId,
           }
       await api.put(`/${basePath}/${mock.id}`, body)
       toast.success("Settings updated")
@@ -216,19 +211,6 @@ function EditSettingsDialog({
         <DialogHeader><DialogTitle>Edit {noun} settings</DialogTitle></DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2"><Label>Title</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
-          <div className="grid grid-cols-1 gap-3">
-            <div className="space-y-2">
-              <Label>Subject</Label>
-              <select
-                value={form.subjectId}
-                onChange={(e) => setForm({ ...form, subjectId: Number(e.target.value) })}
-                className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs"
-              >
-                <option value={0} disabled>Select subject…</option>
-                {(subjects.data ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
-            </div>
-          </div>
           <div className="space-y-2"><Label>Description</Label><Textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
 
           {!isViewOnly && (
@@ -259,7 +241,7 @@ function EditSettingsDialog({
           )}
         </div>
         <DialogFooter>
-          <Button onClick={save} disabled={saving || !form.title.trim() || !form.subjectId}>
+          <Button onClick={save} disabled={saving || !form.title.trim()}>
             {saving && <Loader2 className="mr-2 size-4 animate-spin" />} Save changes
           </Button>
         </DialogFooter>
