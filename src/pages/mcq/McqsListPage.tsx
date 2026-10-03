@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 import { api, errorMessage } from "@/lib/api"
 import { useApi } from "@/hooks/useApi"
-import { useSubjects } from "@/hooks/useSubjects"
 import { useConfirm } from "@/components/ConfirmDialogProvider"
 import type { MockExamResponse, PagedResponse } from "@/lib/types"
 import { PageHeader, CenteredSpinner, ErrorState, EmptyState } from "@/components/common"
@@ -17,16 +16,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
 import { FileQuestion, ListChecks, Loader2, Plus, Trash2, Upload } from "lucide-react"
 
-const selectCls =
-  "h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs focus:outline-none focus:ring-2 focus:ring-ring/40"
-
 /**
  * Creator-side MCQs management. Works exactly like {@link RecallsListPage} minus the year field
  * (MCQs are tagged by subject only). {@code basePath} is the route prefix for Manage links.
  */
 export function McqsListPage({ basePath }: { basePath: string }) {
   const navigate = useNavigate()
-  const subjects = useSubjects()
   const confirm = useConfirm()
   const [page, setPage] = useState(0)
   const { data, loading, error, reload } = useApi(
@@ -35,7 +30,7 @@ export function McqsListPage({ basePath }: { basePath: string }) {
     }).then((r) => r.data),
     [page],
   )
-  const emptyForm = { title: "", description: "", subjectId: 0 }
+  const emptyForm = { title: "", description: "" }
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
@@ -46,7 +41,6 @@ export function McqsListPage({ basePath }: { basePath: string }) {
       const res = await api.post<MockExamResponse>("/mcqs", {
         title: form.title,
         description: form.description,
-        subjectId: form.subjectId,
       })
       toast.success("MCQs paper created — now upload its questions")
       setOpen(false)
@@ -69,7 +63,7 @@ export function McqsListPage({ basePath }: { basePath: string }) {
     <>
       <PageHeader
         title="MCQs"
-        description="Subject-tagged question sets. Students study them — no timing or scoring."
+        description="Question sets. Students study them — no timing or scoring."
         action={
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild><Button><Plus className="mr-2 size-4" /> New MCQs paper</Button></DialogTrigger>
@@ -81,17 +75,10 @@ export function McqsListPage({ basePath }: { basePath: string }) {
                   After creating, you'll go straight to the paper where you can <span className="font-600">bulk-upload</span> all its questions, answers and explanations from a spreadsheet.
                 </div>
                 <div className="space-y-2"><Label>Title</Label><Input placeholder="e.g. Pathology — MCQs set 1" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
-                <div className="space-y-2">
-                  <Label>Subject</Label>
-                  <select className={selectCls} value={form.subjectId} onChange={(e) => setForm({ ...form, subjectId: Number(e.target.value) })}>
-                    <option value={0} disabled>Select subject…</option>
-                    {(subjects.data ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                  </select>
-                </div>
                 <div className="space-y-2"><Label>Description (optional)</Label><Textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
               </div>
               <DialogFooter>
-                <Button onClick={create} disabled={saving || !form.title.trim() || !form.subjectId}>
+                <Button onClick={create} disabled={saving || !form.title.trim()}>
                   {saving && <Loader2 className="mr-2 size-4 animate-spin" />} Create & add questions
                 </Button>
               </DialogFooter>

@@ -3,7 +3,6 @@ import { Link } from "react-router-dom"
 import { toast } from "sonner"
 import { api, errorMessage } from "@/lib/api"
 import { useApi } from "@/hooks/useApi"
-import { useSubjects } from "@/hooks/useSubjects"
 import { useConfirm } from "@/components/ConfirmDialogProvider"
 import type { FeedbackMode, MockExamResponse, PagedResponse } from "@/lib/types"
 import { PageHeader, CenteredSpinner, ErrorState, EmptyState } from "@/components/common"
@@ -18,14 +17,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Clock, ClipboardList, FileQuestion, Loader2, Plus, Target, Trash2 } from "lucide-react"
 
 export function MockExamsListPage() {
-  const subjects = useSubjects()
   const confirm = useConfirm()
   const [page, setPage] = useState(0)
   const { data, loading, error, reload } = useApi(
     () => api.get<PagedResponse<MockExamResponse>>("/mock-exams", { params: { page, size: 15 } }).then((r) => r.data),
     [page],
   )
-  const emptyForm = { title: "", description: "", passMarkPercent: 50, timed: true, durationMinutes: 30, feedbackMode: "ON_SUBMISSION" as FeedbackMode, subjectId: 0 }
+  const emptyForm = { title: "", description: "", passMarkPercent: 50, timed: true, durationMinutes: 30, feedbackMode: "ON_SUBMISSION" as FeedbackMode }
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
@@ -39,7 +37,6 @@ export function MockExamsListPage() {
         passMarkPercent: form.passMarkPercent,
         durationMinutes: form.timed ? form.durationMinutes : null,
         feedbackMode: form.feedbackMode,
-        subjectId: form.subjectId,
       })
       toast.success("Mock exam created")
       setOpen(false)
@@ -61,7 +58,7 @@ export function MockExamsListPage() {
     <>
       <PageHeader
         title="Mock Exam"
-        description="Subject-tagged practice exams for subscribers — auto-graded, timed or self-paced"
+        description="Practice exams for subscribers — auto-graded, timed or self-paced"
         action={
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild><Button><Plus className="mr-2 size-4" /> New Mock Exam</Button></DialogTrigger>
@@ -69,17 +66,6 @@ export function MockExamsListPage() {
               <DialogHeader><DialogTitle>Create Mock Exam</DialogTitle></DialogHeader>
               <div className="space-y-4">
                 <div className="space-y-2"><Label>Title</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
-                <div className="space-y-2">
-                  <Label>Subject</Label>
-                  <select
-                    value={form.subjectId}
-                    onChange={(e) => setForm({ ...form, subjectId: Number(e.target.value) })}
-                    className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs"
-                  >
-                    <option value={0} disabled>Select subject…</option>
-                    {(subjects.data ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                  </select>
-                </div>
                 <div className="space-y-2"><Label>Description</Label><Textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2"><Label>Pass mark %</Label><Input type="number" min={0} max={100} value={form.passMarkPercent} onChange={(e) => setForm({ ...form, passMarkPercent: Number(e.target.value) })} /></div>
@@ -105,7 +91,7 @@ export function MockExamsListPage() {
                 </div>
               </div>
               <DialogFooter>
-                <Button onClick={create} disabled={saving || !form.title.trim() || !form.subjectId}>
+                <Button onClick={create} disabled={saving || !form.title.trim()}>
                   {saving && <Loader2 className="mr-2 size-4 animate-spin" />} Create
                 </Button>
               </DialogFooter>
