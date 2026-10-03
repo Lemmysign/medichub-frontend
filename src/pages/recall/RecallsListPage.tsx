@@ -33,8 +33,7 @@ export function RecallsListPage({ basePath }: { basePath: string }) {
     }).then((r) => r.data),
     [page, subjectId],
   )
-  const currentYear = new Date().getFullYear()
-  const emptyForm = { title: "", description: "", subjectId: 0, examYear: currentYear }
+  const emptyForm = { title: "", description: "", subjectId: 0 }
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
@@ -46,7 +45,6 @@ export function RecallsListPage({ basePath }: { basePath: string }) {
         title: form.title,
         description: form.description,
         subjectId: form.subjectId,
-        examYear: form.examYear,
       })
       toast.success("Recall created — now upload its questions")
       setOpen(false)
@@ -69,7 +67,7 @@ export function RecallsListPage({ basePath }: { basePath: string }) {
     <>
       <PageHeader
         title="Recalls"
-        description="Past-question papers tagged by subject and year. Students study them — no timing or scoring."
+        description="Past-question papers tagged by subject. Students study them — no timing or scoring."
         action={
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild><Button><Plus className="mr-2 size-4" /> New recall</Button></DialogTrigger>
@@ -81,23 +79,17 @@ export function RecallsListPage({ basePath }: { basePath: string }) {
                   After creating, you'll go straight to the paper where you can <span className="font-600">bulk-upload</span> all its questions, answers and explanations from a spreadsheet.
                 </div>
                 <div className="space-y-2"><Label>Title</Label><Input placeholder="e.g. MDCN Pathology — 2024 recall" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label>Subject</Label>
-                    <select className={selectCls} value={form.subjectId} onChange={(e) => setForm({ ...form, subjectId: Number(e.target.value) })}>
-                      <option value={0} disabled>Select subject…</option>
-                      {(subjects.data ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Exam year</Label>
-                    <Input type="number" min={1950} max={2100} value={form.examYear} onChange={(e) => setForm({ ...form, examYear: Number(e.target.value) })} />
-                  </div>
+                <div className="space-y-2">
+                  <Label>Subject</Label>
+                  <select className={selectCls} value={form.subjectId} onChange={(e) => setForm({ ...form, subjectId: Number(e.target.value) })}>
+                    <option value={0} disabled>Select subject…</option>
+                    {(subjects.data ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  </select>
                 </div>
                 <div className="space-y-2"><Label>Description (optional)</Label><Textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
               </div>
               <DialogFooter>
-                <Button onClick={create} disabled={saving || !form.title.trim() || !form.subjectId || !form.examYear}>
+                <Button onClick={create} disabled={saving || !form.title.trim() || !form.subjectId}>
                   {saving && <Loader2 className="mr-2 size-4 animate-spin" />} Create & add questions
                 </Button>
               </DialogFooter>
