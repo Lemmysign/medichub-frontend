@@ -55,7 +55,7 @@ export function MyCoursesPage() {
           ))}
         </div>
       )}
-      {data && <Pagination page={data.page} totalPages={data.totalPages} onPage={setPage} />}
+      {data && <Pagination page={page} totalPages={data.totalPages} onPage={setPage} />}
     </>
   )
 }

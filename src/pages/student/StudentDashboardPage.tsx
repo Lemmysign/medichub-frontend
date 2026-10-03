@@ -18,7 +18,7 @@ export function StudentDashboardPage() {
   )
 
   if (dash.loading || sub.loading) return <CenteredSpinner />
-  if (dash.error) return <ErrorState message={dash.error} />
+  if (dash.error) return <ErrorState message={dash.error} onRetry={dash.reload} />
 
   const d = dash.data!
   const s = sub.data
@@ -29,7 +29,13 @@ export function StudentDashboardPage() {
       <PageHeader title={`Welcome, ${user?.fullName.split(" ")[0]}`} description="Your learning at a glance" />
 
       {/* Subscription banner */}
-      {s?.active ? (
+      {sub.error ? (
+        <Card className="mb-6 flex flex-col gap-3 border-border p-5 sm:flex-row sm:items-center">
+          <AlertCircle className="size-5 shrink-0 text-muted-foreground" />
+          <p className="flex-1 text-sm text-muted-foreground">We could not check your subscription status right now.</p>
+          <Button size="sm" variant="outline" className="shrink-0" onClick={() => sub.reload()}>Try again</Button>
+        </Card>
+      ) : s?.active ? (
         <Card className="mb-6 flex flex-col gap-4 border-0 bg-primary p-5 text-primary-foreground sm:flex-row sm:items-center">
           <CheckCircle2 className="size-5 shrink-0 opacity-90" />
           <div className="flex-1">

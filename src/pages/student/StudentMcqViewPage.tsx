@@ -3,8 +3,9 @@ import { Link, useParams } from "react-router-dom"
 import { api } from "@/lib/api"
 import { useApi } from "@/hooks/useApi"
 import type { McqQuestionResponse, PagedResponse } from "@/lib/types"
-import { CenteredSpinner, ErrorState, EmptyState } from "@/components/common"
+import { CenteredSpinner, ErrorState, EmptyState, LoadingOverlay } from "@/components/common"
 import { Pagination } from "@/components/ui/pagination"
+import { QuestionImage } from "@/components/QuestionImage"
 import { Card } from "@/components/ui/card"
 import { ArrowLeft, CheckCircle2, Lightbulb, ListChecks } from "lucide-react"
 
@@ -14,7 +15,7 @@ const PAGE_SIZE = 15
 export function StudentMcqViewPage() {
   const { id } = useParams()
   const [page, setPage] = useState(0)
-  const { data, loading, error } = useApi(
+  const { data, loading, refreshing, error, reload } = useApi(
     () => api.get<PagedResponse<McqQuestionResponse>>(`/student/mcqs/${id}/questions`, {
       params: { page, size: PAGE_SIZE },
     }).then((r) => r.data),
@@ -45,17 +46,17 @@ export function StudentMcqViewPage() {
         </div>
       </Card>
 
-      {loading ? <CenteredSpinner /> : error ? <ErrorState message={error} /> : questions.length === 0 ? (
+      {loading ? <CenteredSpinner /> : error ? <ErrorState message={error} onRetry={reload} /> : questions.length === 0 ? (
         <EmptyState title="No questions in this set yet" />
       ) : (
-        <>
+        <LoadingOverlay active={refreshing} label="Loading questions…">
           <div className="space-y-4">
             {questions.map((q, i) => {
-              const number = page * PAGE_SIZE + i + 1
+              const number = (data?.page ?? page) * PAGE_SIZE + i + 1
               return (
                 <Card key={q.id} className="p-5">
                   <p className="font-600"><span className="text-muted-foreground">{number}.</span> {q.text}</p>
-                  {q.imageUrl && <img src={q.imageUrl} alt="" className="mt-3 max-h-72 rounded-lg border border-border object-contain" />}
+                  {q.imageUrl && <QuestionImage src={q.imageUrl} wrapperClassName="mt-3" className="max-h-72 rounded-lg border border-border object-contain" />}
 
                   <div className="mt-3 space-y-2">
                     {q.options.map((o, oi) => {
@@ -84,8 +85,8 @@ export function StudentMcqViewPage() {
               )
             })}
           </div>
-          {data && <Pagination page={data.page} totalPages={data.totalPages} onPage={setPage} />}
-        </>
+          {data && <Pagination page={page} totalPages={data.totalPages} onPage={setPage} />}
+        </LoadingOverlay>
       )}
     </div>
   )

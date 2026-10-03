@@ -91,7 +91,7 @@ export function CourseCatalog({
       )}
 
       {/* Pagination applies to the full catalogue; hidden while a client-side search is active. */}
-      {!q.trim() && data && <Pagination page={data.page} totalPages={data.totalPages} onPage={setPage} />}
+      {!q.trim() && data && <Pagination page={page} totalPages={data.totalPages} onPage={setPage} />}
     </div>
   )
 }

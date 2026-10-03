@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { BankTransferCard } from "@/components/BankTransferCard"
 import { PaymentMethodDialog, type Gateway } from "@/components/PaymentMethodDialog"
+import { SUBSCRIBE_ENABLED } from "@/lib/featureFlags"
 import { CheckCircle2, Loader2 } from "lucide-react"
 
 export function SubscriptionPage() {
@@ -310,9 +311,9 @@ export function SubscriptionPage() {
                 <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-success" /> Ask-the-instructor Q&A on any course</li>
               </ul>
               <Button
-                className="mt-6 w-full"
-                onClick={() => setChooserOpen(true)}
-                disabled={!canPay || busyGateway != null}
+                className="mt-6 w-full disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100"
+                onClick={() => { if (SUBSCRIBE_ENABLED) setChooserOpen(true) }}
+                disabled={!SUBSCRIBE_ENABLED || !canPay || busyGateway != null}
               >
                 {busyGateway != null && <Loader2 className="mr-2 size-4 animate-spin" />}
                 {!canPay && s.active

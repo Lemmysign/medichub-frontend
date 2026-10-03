@@ -128,7 +128,7 @@ export function AdminUsersPage() {
               </TableBody>
             </Table>
           </Card>
-          <Pagination page={data.page} totalPages={data.totalPages} onPage={setPage} />
+          <Pagination page={page} totalPages={data.totalPages} onPage={setPage} />
         </>
       )}
 
