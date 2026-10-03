@@ -17,6 +17,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { scrollAppToTop } from "@/lib/scroll"
 import {
   ArrowLeft, ArrowRight, CheckCircle2, ClipboardList, Clock, Flag, Lightbulb,
   Loader2, PauseCircle, Send, Target, Trophy, XCircle, AlertCircle,
@@ -195,7 +196,7 @@ export function MockExamRunPage({
       setResult(res.data); setPaused(false); setPhase("result")
       attempts.reload(); list.reload()
       if (auto) toast.message("Time's up — your exam was submitted automatically.")
-      window.scrollTo(0, 0)
+      scrollAppToTop()
     } catch (e) {
       toast.error(errorMessage(e)); submittedRef.current = false
     }
