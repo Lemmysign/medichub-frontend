@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { scrollAppToTop } from "@/lib/scroll"
+import { QuestionImage, preloadImages } from "@/components/QuestionImage"
 import {
   ArrowLeft, ArrowRight, CheckCircle2, ClipboardList, Clock, Flag, Lightbulb,
   Loader2, PauseCircle, Send, Target, Trophy, XCircle, AlertCircle,
@@ -105,7 +106,25 @@ export function MockExamRunPage({
   const [result, setResult] = useState<AttemptDetailResponse | null>(null)
   const [starting, setStarting] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  // Questions whose answer is being checked by the server right now (study mode). The ref is the instant guard
+  // against double clicks, the state drives the spinner.
+  const [checking, setChecking] = useState<Set<number>>(new Set())
+  const checkingRef = useRef<Set<number>>(new Set())
   const submittedRef = useRef(false)
+  const questionScrollRef = useRef<HTMLDivElement>(null)
+
+  // Every question starts at the top. The exam screen scrolls inside its own panel, so without this the next
+  // question opens scrolled down to wherever the Next button was, with its text and picture out of view.
+  useEffect(() => {
+    questionScrollRef.current?.scrollTo({ top: 0 })
+  }, [current])
+
+  // Fetch the next two pictures while the student is still on this question, so they are ready when they click Next.
+  useEffect(() => {
+    if (phase !== "running" || !exam) return
+    preloadImages([exam.questions[current + 1]?.imageUrl, exam.questions[current + 2]?.imageUrl])
+  }, [phase, exam, current])
 
   const immediate = exam?.feedbackMode === "IMMEDIATE"
   const timed = !!exam?.durationMinutes
@@ -140,7 +159,7 @@ export function MockExamRunPage({
   }
 
   function toggle(q: StudentQuestionResponse, optionId: number) {
-    if (!exam || phase !== "running" || checks[q.id] || paused) return
+    if (!exam || phase !== "running" || checks[q.id] || paused || submitting || checkingRef.current.has(q.id)) return
     const multi = q.type === "MULTIPLE_CHOICE"
     setAnswers((prev) => {
       const cur = prev[q.id] ?? []
@@ -155,7 +174,9 @@ export function MockExamRunPage({
   }
 
   async function checkQuestion(q: StudentQuestionResponse, ids: number[]) {
-    if (!exam || ids.length === 0) return
+    if (!exam || ids.length === 0 || checkingRef.current.has(q.id)) return
+    checkingRef.current.add(q.id)
+    setChecking(new Set(checkingRef.current))
     try {
       const res = await api.post<CheckAnswerResponse>(
         `/${basePath}/${mockId}/attempts/${exam.attemptId}/questions/${q.id}/check`,
@@ -165,6 +186,9 @@ export function MockExamRunPage({
       if (res.data.timerPaused) setPaused(true)
     } catch (e) {
       toast.error(errorMessage(e))
+    } finally {
+      checkingRef.current.delete(q.id)
+      setChecking(new Set(checkingRef.current))
     }
   }
 
@@ -186,6 +210,7 @@ export function MockExamRunPage({
     if (!exam || submittedRef.current) return
     submittedRef.current = true
     setConfirmOpen(false)
+    setSubmitting(true)
     try {
       const payload = {
         answers: Object.entries(answers)
@@ -199,6 +224,8 @@ export function MockExamRunPage({
       scrollAppToTop()
     } catch (e) {
       toast.error(errorMessage(e)); submittedRef.current = false
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -228,7 +255,7 @@ export function MockExamRunPage({
 
   // ---------------------------------------------------------------- INTRO
   if (phase === "intro") {
-    const introTimed = summary ? summary.durationMinutes != null : true
+    const introTimed = summary ? summary.durationMinutes != null : false
     const history = attempts.data?.content ?? []
     return (
       <div className="mx-auto max-w-2xl">
@@ -244,14 +271,14 @@ export function MockExamRunPage({
             <div className="font-700 text-[10px] uppercase tracking-widest opacity-80">
               {eyebrow}{summary?.examYear ? ` · ${summary.examYear}` : ""}
             </div>
-            <h1 className="font-800 text-2xl tracking-tight">{summary?.title ?? "Exam"}</h1>
+            <h1 className="font-800 text-2xl tracking-tight">{summary?.title ?? (list.loading ? "Loading exam…" : "Exam")}</h1>
             {summary?.description && <p className="mt-2 text-sm opacity-90">{summary.description}</p>}
           </div>
 
           <div className="grid grid-cols-2 divide-x divide-y divide-border border-b border-border [&>div]:p-5">
             <Stat icon={<ClipboardList className="size-4" />} value={summary?.questionCount ?? "—"} label="Questions" />
-            <Stat icon={<Clock className="size-4" />} value={introTimed ? `${summary?.durationMinutes} min` : "Untimed"} label="Duration" />
-            <Stat icon={<Target className="size-4" />} value={`${summary?.passMarkPercent ?? "—"}%`} label="Pass mark" />
+            <Stat icon={<Clock className="size-4" />} value={summary ? (summary.durationMinutes != null ? `${summary.durationMinutes} min` : "Untimed") : "—"} label="Duration" />
+            <Stat icon={<Target className="size-4" />} value={summary ? `${summary.passMarkPercent}%` : "—"} label="Pass mark" />
             <Stat icon={<Trophy className="size-4" />} value={summary?.bestScorePercent != null ? `${summary.bestScorePercent}%` : "—"} label="Your best" />
           </div>
 
@@ -272,14 +299,19 @@ export function MockExamRunPage({
           )}
 
           <div className="p-5">
-            <div className="mb-4 flex items-start gap-2 rounded-md border border-warning/30 bg-warning/5 p-3 text-xs text-muted-foreground">
-              <AlertCircle className="mt-0.5 size-4 shrink-0 text-warning" />
-              {introTimed
-                ? <span>The timer starts immediately when you begin. The exam will <span className="font-700">auto-submit</span> when time runs out. Ensure you have a stable internet connection.</span>
-                : <span>This exam is self-paced. Submit when you're ready.</span>}
-            </div>
-            <Button className="font-700 w-full" size="lg" onClick={start} disabled={starting}>
-              {starting ? <Loader2 className="mr-2 size-4 animate-spin" /> : <span className="mr-2">▷</span>}
+            {list.error && !summary && <div className="mb-4"><ErrorState message={list.error} onRetry={list.reload} /></div>}
+            {summary ? (
+              <div className="mb-4 flex items-start gap-2 rounded-md border border-warning/30 bg-warning/5 p-3 text-xs text-muted-foreground">
+                <AlertCircle className="mt-0.5 size-4 shrink-0 text-warning" />
+                {introTimed
+                  ? <span>The timer starts immediately when you begin. The exam will <span className="font-700">auto-submit</span> when time runs out. Ensure you have a stable internet connection.</span>
+                  : <span>This exam is self-paced. Submit when you're ready.</span>}
+              </div>
+            ) : list.loading && (
+              <p className="mb-4 flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="size-3.5 animate-spin" /> Loading exam details…</p>
+            )}
+            <Button className="font-700 w-full" size="lg" onClick={start} disabled={starting || list.loading}>
+              {starting || list.loading ? <Loader2 className="mr-2 size-4 animate-spin" /> : <span className="mr-2">▷</span>}
               Begin Exam
             </Button>
           </div>
@@ -289,7 +321,6 @@ export function MockExamRunPage({
   }
 
   if (!exam) return <CenteredSpinner />
-  if (list.error) return <ErrorState message={list.error} />
 
   // ---------------------------------------------------------------- RESULT
   if (phase === "result" && result) {
@@ -320,7 +351,7 @@ export function MockExamRunPage({
                   <p className="font-600"><span className="text-muted-foreground">{i + 1}.</span> {q.text}</p>
                   {reveal && <Badge variant={reveal.correct ? "default" : "destructive"}>{reveal.correct ? "Correct" : "Wrong"}</Badge>}
                 </div>
-                {q.imageUrl && <img src={q.imageUrl} alt="" className="mt-3 max-h-72 rounded-lg border border-border object-contain" />}
+                {q.imageUrl && <QuestionImage src={q.imageUrl} wrapperClassName="mt-3" className="max-h-72 rounded-lg border border-border object-contain" />}
                 <div className="mt-3 space-y-2">
                   {q.options.map((o, oi) => {
                     const isCorrect = reveal && reveal.correctOptionIds.includes(o.id)
@@ -356,12 +387,20 @@ export function MockExamRunPage({
   // ---------------------------------------------------------------- RUNNING (full-screen focus)
   const q = exam.questions[current]
   const reveal = revealFor(q.id)
-  const locked = !!checks[q.id] || paused
+  const isChecking = checking.has(q.id)
+  const locked = !!checks[q.id] || paused || isChecking || submitting
   const isMulti = q.type === "MULTIPLE_CHOICE"
   const picked = answers[q.id] ?? []
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-background">
+      {submitting && (
+        <div role="status" aria-live="polite" className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-background/80 backdrop-blur-sm">
+          <Loader2 className="size-9 animate-spin text-primary" />
+          <p className="font-700 text-lg">Submitting your exam…</p>
+          <p className="text-sm text-muted-foreground">Please keep this page open while your answers are marked.</p>
+        </div>
+      )}
       {/* Top bar */}
       <header className="flex shrink-0 items-center gap-3 border-b border-border bg-card px-4 py-3">
         <div className="flex-1 truncate text-sm">
@@ -373,7 +412,7 @@ export function MockExamRunPage({
             {paused ? <PauseCircle className="size-4" /> : <Clock className="size-4" />} {fmt(remaining)}
           </Badge>
         )}
-        <Button size="sm" onClick={() => setConfirmOpen(true)} disabled={paused}>
+        <Button size="sm" onClick={() => setConfirmOpen(true)} disabled={paused || submitting}>
           <Send className="mr-1 size-4" /> Submit
         </Button>
       </header>
@@ -382,7 +421,7 @@ export function MockExamRunPage({
       </div>
 
       {/* Question */}
-      <div className="flex-1 overflow-auto">
+      <div ref={questionScrollRef} className="flex-1 overflow-auto">
         <div className="mx-auto max-w-3xl px-4 py-8">
           <div className="mb-5 flex items-center justify-between gap-3">
             <div className="text-sm text-muted-foreground">
@@ -404,7 +443,7 @@ export function MockExamRunPage({
 
           <Card className="mb-4 p-6">
             <p className="leading-relaxed">{q.text}</p>
-            {q.imageUrl && <img src={q.imageUrl} alt="" className="mt-4 max-h-80 rounded-lg border border-border object-contain" />}
+            {q.imageUrl && <QuestionImage src={q.imageUrl} wrapperClassName="mt-4" className="max-h-80 rounded-lg border border-border object-contain" />}
           </Card>
 
           {isMulti && !locked && (
@@ -444,6 +483,11 @@ export function MockExamRunPage({
               Check answer
             </Button>
           )}
+          {isChecking && (
+            <p role="status" className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="size-4 animate-spin text-primary" /> Checking your answer…
+            </p>
+          )}
 
           {/* Immediate-mode reveal — shown once answered, whether right or wrong */}
           {immediate && reveal && reveal.explanation && (
@@ -463,7 +507,7 @@ export function MockExamRunPage({
 
           {/* Footer nav */}
           <div className="mt-8 flex items-center justify-between gap-4">
-            <Button variant="outline" onClick={() => setCurrent((c) => Math.max(0, c - 1))} disabled={current === 0}>
+            <Button variant="outline" onClick={() => setCurrent((c) => Math.max(0, c - 1))} disabled={current === 0 || submitting}>
               <ArrowLeft className="mr-1 size-4" /> Previous
             </Button>
             <div className="hidden items-center gap-1 sm:flex">
@@ -474,6 +518,7 @@ export function MockExamRunPage({
                   <button
                     key={p}
                     onClick={() => setCurrent(p - 1)}
+                    disabled={submitting}
                     className={"tabular size-8 rounded-md text-xs font-600 transition-colors " +
                       (p === current + 1
                         ? "bg-primary text-primary-foreground"
@@ -488,7 +533,7 @@ export function MockExamRunPage({
                 ),
               )}
             </div>
-            <Button onClick={() => setCurrent((c) => Math.min(total - 1, c + 1))} disabled={current >= total - 1 || paused}>
+            <Button onClick={() => setCurrent((c) => Math.min(total - 1, c + 1))} disabled={current >= total - 1 || paused || submitting}>
               Next <ArrowRight className="ml-1 size-4" />
             </Button>
           </div>

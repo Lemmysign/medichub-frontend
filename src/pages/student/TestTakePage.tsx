@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import { toast } from "sonner"
 import { api, errorMessage } from "@/lib/api"
@@ -44,11 +44,14 @@ export function TestTakePage() {
   const [checks, setChecks] = useState<Record<number, CheckAnswerResponse>>({}) // immediate-mode reveals
   const [result, setResult] = useState<AttemptDetailResponse | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  // Questions being checked by the server right now: lock them and show a spinner until the answer comes back.
+  const [checking, setChecking] = useState<Set<number>>(new Set())
+  const checkingRef = useRef<Set<number>>(new Set())
 
   const immediate = test.data?.feedbackMode === "IMMEDIATE"
 
   function toggle(q: StudentQuestionResponse, optionId: number) {
-    if (result || checks[q.id]) return // locked once graded/revealed
+    if (result || checks[q.id] || checkingRef.current.has(q.id)) return // locked once graded/revealed or while being checked
     const multi = q.type === "MULTIPLE_CHOICE"
     setAnswers((prev) => {
       const cur = prev[q.id] ?? []
@@ -63,7 +66,9 @@ export function TestTakePage() {
   }
 
   async function checkQuestion(q: StudentQuestionResponse, ids: number[]) {
-    if (ids.length === 0) return
+    if (ids.length === 0 || checkingRef.current.has(q.id)) return
+    checkingRef.current.add(q.id)
+    setChecking(new Set(checkingRef.current))
     try {
       const res = await api.post<CheckAnswerResponse>(
         `/student/courses/${courseId}/tests/${testId}/questions/${q.id}/check`,
@@ -72,6 +77,9 @@ export function TestTakePage() {
       setChecks((prev) => ({ ...prev, [q.id]: res.data }))
     } catch (e) {
       toast.error(errorMessage(e))
+    } finally {
+      checkingRef.current.delete(q.id)
+      setChecking(new Set(checkingRef.current))
     }
   }
 
@@ -145,7 +153,8 @@ export function TestTakePage() {
       <div className="space-y-4">
         {t.questions.map((q, i) => {
           const reveal = revealFor(q.id)
-          const locked = !!result || !!checks[q.id]
+          const isChecking = checking.has(q.id)
+          const locked = !!result || !!checks[q.id] || isChecking
           const isMulti = q.type === "MULTIPLE_CHOICE"
           const picked = answers[q.id] ?? []
           return (
@@ -192,6 +201,11 @@ export function TestTakePage() {
                 <Button className="mt-3" size="sm" variant="outline" disabled={picked.length === 0} onClick={() => checkQuestion(q, picked)}>
                   Check answer
                 </Button>
+              )}
+              {isChecking && (
+                <p role="status" className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="size-4 animate-spin text-primary" /> Checking your answer…
+                </p>
               )}
               {/* Explanation shows once a question is answered (study mode) or after submit — right or wrong. */}
               {reveal && reveal.explanation && (

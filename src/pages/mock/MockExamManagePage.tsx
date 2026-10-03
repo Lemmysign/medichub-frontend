@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Pagination } from "@/components/ui/pagination"
+import { QuestionImage } from "@/components/QuestionImage"
 import { Loader2, Pencil, Trash2 } from "lucide-react"
 
 const QUESTIONS_PER_PAGE = 15
@@ -120,7 +121,7 @@ export function MockExamManagePage({ basePath = "mock-exams", kind = "MCQ" as Te
                             <Button size="sm" variant="ghost" onClick={() => removeQuestion(q.id)}><Trash2 className="size-4 text-destructive" /></Button>
                           </div>
                         </div>
-                        {q.imageUrl && <img src={q.imageUrl} alt="" className="mt-2 max-h-40 rounded-md border border-border object-contain" />}
+                        {q.imageUrl && <QuestionImage src={q.imageUrl} wrapperClassName="mt-2" className="max-h-40 rounded-md border border-border object-contain" />}
                         <div className="mt-1 flex flex-wrap gap-2">
                           {q.options.map((o) => (
                             <Badge key={o.id} variant={o.correct ? "default" : "secondary"}>{o.text}</Badge>

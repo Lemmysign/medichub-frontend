@@ -129,7 +129,7 @@ export function McqsListPage({ basePath }: { basePath: string }) {
           ))}
         </div>
       )}
-      {data && <Pagination page={data.page} totalPages={data.totalPages} onPage={setPage} />}
+      {data && <Pagination page={page} totalPages={data.totalPages} onPage={setPage} />}
     </>
   )
 }

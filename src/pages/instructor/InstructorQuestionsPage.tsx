@@ -65,7 +65,7 @@ export function InstructorQuestionsPage() {
               <QuestionCard key={q.id} q={q} onReplied={reload} />
             ))}
           </div>
-          {data && <Pagination page={data.page} totalPages={data.totalPages} onPage={setPage} />}
+          {data && <Pagination page={page} totalPages={data.totalPages} onPage={setPage} />}
         </>
       )}
     </>

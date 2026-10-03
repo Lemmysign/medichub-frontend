@@ -3,7 +3,7 @@ import { Link } from "react-router-dom"
 import { api } from "@/lib/api"
 import { useApi } from "@/hooks/useApi"
 import type { McqSummaryResponse, PagedResponse } from "@/lib/types"
-import { PageHeader, CenteredSpinner, ErrorState, EmptyState } from "@/components/common"
+import { PageHeader, CenteredSpinner, ErrorState, EmptyState, LoadingOverlay } from "@/components/common"
 import { Pagination } from "@/components/ui/pagination"
 import { ArrowUpRight, FileQuestion, ListChecks } from "lucide-react"
 
@@ -11,7 +11,7 @@ import { ArrowUpRight, FileQuestion, ListChecks } from "lucide-react"
 export function StudentMcqsPage() {
   const [page, setPage] = useState(0)
 
-  const { data, loading, error } = useApi(
+  const { data, loading, refreshing, error, reload } = useApi(
     () => api.get<PagedResponse<McqSummaryResponse>>("/student/mcqs", {
       params: { page, size: 12 },
     }).then((r) => r.data),
@@ -26,9 +26,10 @@ export function StudentMcqsPage() {
         description="Question sets to study. Open one to read its questions, answers and explanations — no timing, no scoring."
       />
 
-      {loading ? <CenteredSpinner /> : error ? <ErrorState message={error} /> : papers.length === 0 ? (
+      {loading ? <CenteredSpinner /> : error ? <ErrorState message={error} onRetry={reload} /> : papers.length === 0 ? (
         <EmptyState title="No MCQs found" description="Check back soon — more are added regularly." />
       ) : (
+        <LoadingOverlay active={refreshing}>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {papers.map((m) => (
             <Link
@@ -60,8 +61,9 @@ export function StudentMcqsPage() {
             </Link>
           ))}
         </div>
+        </LoadingOverlay>
       )}
-      {data && <Pagination page={data.page} totalPages={data.totalPages} onPage={setPage} />}
+      {data && <Pagination page={page} totalPages={data.totalPages} onPage={setPage} />}
     </>
   )
 }

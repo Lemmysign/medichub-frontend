@@ -1,6 +1,7 @@
 import type { ComponentType, ReactNode } from "react"
 import { Loader2, type LucideProps } from "lucide-react"
 import { Card } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 
 type StatAccent = "primary" | "success" | "warning" | "accent" | "destructive"
 
@@ -65,10 +66,34 @@ export function CenteredSpinner() {
   )
 }
 
-export function ErrorState({ message }: { message: string }) {
+export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
     <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-6 text-center text-sm text-destructive">
       {message}
+      {onRetry && (
+        <div className="mt-3">
+          <Button type="button" size="sm" variant="outline" onClick={onRetry}>Try again</Button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/**
+ * Wraps content that is being re-fetched (next page, new filter): the old content is dimmed and locked and a
+ * "Loading…" pill sits at the top, so nobody reads or answers stale content without knowing it is about to change.
+ */
+export function LoadingOverlay({ active, label = "Loading…", children }: { active: boolean; label?: string; children: ReactNode }) {
+  return (
+    <div className="relative" aria-busy={active}>
+      {active && (
+        <div role="status" aria-live="polite" className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center pt-3">
+          <span className="font-600 inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm shadow-md">
+            <Loader2 className="size-4 animate-spin text-primary" /> {label}
+          </span>
+        </div>
+      )}
+      <div className={active ? "pointer-events-none select-none opacity-40 transition-opacity" : "transition-opacity"}>{children}</div>
     </div>
   )
 }
