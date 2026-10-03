@@ -15,16 +15,15 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
-import { Clock, ClipboardList, FileQuestion, Loader2, Plus, Tag, Target, Trash2 } from "lucide-react"
+import { Clock, ClipboardList, FileQuestion, Loader2, Plus, Target, Trash2 } from "lucide-react"
 
 export function MockExamsListPage() {
   const subjects = useSubjects()
   const confirm = useConfirm()
-  const [subjectId, setSubjectId] = useState<number | null>(null)
   const [page, setPage] = useState(0)
   const { data, loading, error, reload } = useApi(
-    () => api.get<PagedResponse<MockExamResponse>>("/mock-exams", { params: { page, size: 15, subjectId: subjectId ?? undefined } }).then((r) => r.data),
-    [page, subjectId],
+    () => api.get<PagedResponse<MockExamResponse>>("/mock-exams", { params: { page, size: 15 } }).then((r) => r.data),
+    [page],
   )
   const emptyForm = { title: "", description: "", passMarkPercent: 50, timed: true, durationMinutes: 30, feedbackMode: "ON_SUBMISSION" as FeedbackMode, subjectId: 0 }
   const [open, setOpen] = useState(false)
@@ -115,8 +114,6 @@ export function MockExamsListPage() {
         }
       />
 
-      <SubjectFilter subjects={subjects.data ?? []} value={subjectId} onChange={(v) => { setSubjectId(v); setPage(0) }} />
-
       {loading ? <CenteredSpinner /> : error ? <ErrorState message={error} /> : !data || data.content.length === 0 ? (
         <EmptyState title="No mock exams yet" description="Create one and add questions, then publish it for subscribers." />
       ) : (
@@ -136,11 +133,6 @@ export function MockExamsListPage() {
                     </span>
                   </div>
                   <div className="mt-1 flex flex-wrap items-center gap-2">
-                    {m.subjectName && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-[10px] font-600 text-accent-foreground">
-                        <Tag className="size-3" /> {m.subjectName}
-                      </span>
-                    )}
                     {m.ownerName && <span className="text-xs text-muted-foreground">by {m.ownerName}</span>}
                   </div>
                 </div>
@@ -169,29 +161,5 @@ export function MockExamsListPage() {
       )}
       {data && <Pagination page={data.page} totalPages={data.totalPages} onPage={setPage} />}
     </>
-  )
-}
-
-/** Subject dropdown filter shared by the Mock Exam and student Mock Exam lists. */
-export function SubjectFilter({
-  subjects, value, onChange,
-}: {
-  subjects: { id: number; name: string }[]
-  value: number | null
-  onChange: (v: number | null) => void
-}) {
-  if (subjects.length === 0) return null
-  return (
-    <div className="mb-5 max-w-xs">
-      <label className="mb-1 flex items-center gap-1 text-xs font-600 text-muted-foreground"><Tag className="size-3.5" /> Subject</label>
-      <select
-        value={value ?? ""}
-        onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)}
-        className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs focus:outline-none focus:ring-2 focus:ring-ring/40"
-      >
-        <option value="">All subjects</option>
-        {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-      </select>
-    </div>
   )
 }
