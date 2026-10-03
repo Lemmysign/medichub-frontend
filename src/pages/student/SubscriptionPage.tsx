@@ -1,27 +1,48 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
 import { api, errorMessage } from "@/lib/api"
 import { useApi } from "@/hooks/useApi"
 import { useConfirm } from "@/components/ConfirmDialogProvider"
-import type { InitializeSubscriptionResponse, SubscriptionPlanResponse, SubscriptionStatusResponse } from "@/lib/types"
+import type {
+  InitializeSubscriptionResponse,
+  PaymentOptionsResponse,
+  PaymentVerificationResponse,
+  SubscriptionPlanResponse,
+  SubscriptionStatusResponse,
+} from "@/lib/types"
 import { PageHeader, CenteredSpinner, ErrorState, formatNaira } from "@/components/common"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { BankTransferCard } from "@/components/BankTransferCard"
+import { PaymentMethodDialog, type Gateway } from "@/components/PaymentMethodDialog"
 import { CheckCircle2, Loader2 } from "lucide-react"
 
 export function SubscriptionPage() {
   const [params, setParams] = useSearchParams()
   const status = useApi(() => api.get<SubscriptionStatusResponse>("/student/subscription").then((r) => r.data), [])
   const plan = useApi(() => api.get<SubscriptionPlanResponse>("/public/subscription-plan").then((r) => r.data).catch(() => null), [])
+  // Which gateways are switched on. If this can't be read, behave as before (Paystack only).
+  const options = useApi(() => api.get<PaymentOptionsResponse>("/public/payment-options").then((r) => r.data).catch(() => null), [])
   const [starting, setStarting] = useState(false)
+  const [startingSquad, setStartingSquad] = useState(false)
   const [cancelling, setCancelling] = useState(false)
+  const [chooserOpen, setChooserOpen] = useState(false)
   const confirm = useConfirm()
+
+  // The two gateways return to this page differently: Paystack adds ?reference=..., ours for Squad is
+  // ?provider=squad&ref=... (Squad may add its own ?reference= too). Capture once, up front, so a Squad
+  // return is never mistaken for a Paystack one, and so React re-running effects can't lose it.
+  const returned = useRef(
+    params.get("provider") === "squad"
+      ? { squadRef: params.get("ref"), paystackRef: null as string | null }
+      : { squadRef: null as string | null, paystackRef: params.get("reference") },
+  )
 
   // Handle the Paystack callback (?reference=...) after checkout.
   useEffect(() => {
-    const reference = params.get("reference")
+    const reference = returned.current.paystackRef
     if (!reference) return
     api
       .get<SubscriptionStatusResponse>(`/student/subscription/verify/${reference}`)
@@ -37,6 +58,62 @@ export function SubscriptionPage() {
       })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Handle the Squad return (?provider=squad&ref=...). Squad confirms asynchronously, so keep asking for
+  // a short while; the server also settles it on its own (webhook + background sweep) if we give up first.
+  useEffect(() => {
+    const ref = returned.current.squadRef
+    if (!ref) return
+    let cancelled = false
+    const toastId = toast.loading("Confirming your payment with Squad…")
+    ;(async () => {
+      try {
+        for (let attempt = 0; attempt < 6 && !cancelled; attempt++) {
+          const r = await api.get<PaymentVerificationResponse>(`/student/subscription/squad/verify/${ref}`)
+          if (cancelled) return
+          if (r.data.outcome === "PAID") {
+            toast.success("Payment confirmed — your subscription is active!", { id: toastId })
+            status.reload()
+            return
+          }
+          if (r.data.outcome === "FAILED") {
+            toast.error("Squad reported that this payment didn't go through. No subscription time was added.", { id: toastId })
+            return
+          }
+          await new Promise((resolve) => setTimeout(resolve, 4000))
+        }
+        if (!cancelled) {
+          toast.message(
+            "We haven't received confirmation yet. If you completed the payment, your subscription will activate automatically within a few minutes.",
+            { id: toastId, duration: 10000 },
+          )
+          status.reload()
+        }
+      } catch (e) {
+        if (!cancelled) toast.error(errorMessage(e), { id: toastId })
+      }
+    })()
+    if (params.has("provider") || params.has("ref")) {
+      ;["provider", "ref", "reference", "trxref"].forEach((key) => params.delete(key))
+      setParams(params, { replace: true })
+    }
+    return () => {
+      cancelled = true
+      toast.dismiss(toastId) // never leave a spinner behind if the page goes away mid-check
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  async function payWithSquad() {
+    setStartingSquad(true)
+    try {
+      const res = await api.post<InitializeSubscriptionResponse>("/student/subscription/squad/initialize")
+      window.location.href = res.data.authorizationUrl
+    } catch (e) {
+      toast.error(errorMessage(e, "Could not start checkout"))
+      setStartingSquad(false)
+    }
+  }
 
   async function subscribe() {
     setStarting(true)
@@ -73,6 +150,31 @@ export function SubscriptionPage() {
   const s = status.data!
   const p = plan.data
   const endDateText = s.endDate ? new Date(s.endDate).toLocaleDateString() : "—"
+  const paystackOn = options.data ? options.data.paystack : true
+  const squadOn = options.data?.squad === true
+  // A Squad payment is one-off, so it must never be offered on top of an auto-renewing Paystack subscription.
+  const autoRenewing = s.active && s.autoRenews && !s.cancelAtPeriodEnd
+  // Which gateways this student can use right now. An active student can only top up with a one-off
+  // payment: Paystack would start a second recurring plan, which was never allowed from this page.
+  const gateways: Gateway[] = autoRenewing
+    ? []
+    : s.active
+      ? (squadOn ? ["squad"] : [])
+      : [...(paystackOn ? (["paystack"] as Gateway[]) : []), ...(squadOn ? (["squad"] as Gateway[]) : [])]
+  const busyGateway: Gateway | null = starting ? "paystack" : startingSquad ? "squad" : null
+
+  function startCheckout(gateway: Gateway) {
+    return gateway === "paystack" ? subscribe() : payWithSquad()
+  }
+
+  // One gateway: no question to ask, go straight there. Several: let the student choose.
+  function onSubscribeClick() {
+    if (gateways.length === 1) {
+      void startCheckout(gateways[0])
+    } else if (gateways.length > 1) {
+      setChooserOpen(true)
+    }
+  }
 
   return (
     <>
@@ -101,6 +203,7 @@ export function SubscriptionPage() {
         </p>
       )}
 
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 lg:grid-cols-2 xl:max-w-5xl">
       <Card className="max-w-md">
         <CardHeader>
           <CardTitle>{p ? p.name : "Subscription plan"}</CardTitle>
@@ -122,10 +225,29 @@ export function SubscriptionPage() {
                 <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-success" /> Full test attempt history & scores</li>
                 <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-success" /> Ask-the-instructor Q&A on any course</li>
               </ul>
-              <Button className="mt-6 w-full" onClick={subscribe} disabled={starting || s.active}>
-                {starting && <Loader2 className="mr-2 size-4 animate-spin" />}
-                {s.active ? "Subscribed" : "Subscribe with Paystack"}
+              <Button
+                className="mt-6 w-full"
+                onClick={onSubscribeClick}
+                disabled={gateways.length === 0 || busyGateway != null}
+              >
+                {busyGateway != null && <Loader2 className="mr-2 size-4 animate-spin" />}
+                {gateways.length === 0 && s.active
+                  ? "Subscribed"
+                  : s.active
+                    ? `Extend ${p.intervalDays} days`
+                    : "Subscribe"}
               </Button>
+              {s.active && gateways.length === 1 && gateways[0] === "squad" && (
+                <p className="mt-2 text-center text-xs text-muted-foreground">
+                  One-time payment for {p.intervalDays} days, added to your current period. It doesn't renew automatically.
+                </p>
+              )}
+
+              {!s.active && gateways.length === 0 && (
+                <p className="mt-6 rounded-md border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
+                  Online payment isn't available right now. Please pay by bank transfer using the details alongside.
+                </p>
+              )}
 
               {s.active && s.autoRenews && !s.cancelAtPeriodEnd && (
                 <Button
@@ -149,6 +271,19 @@ export function SubscriptionPage() {
           )}
         </CardContent>
       </Card>
+
+      <BankTransferCard priceKobo={p?.priceKobo} active={s.active} />
+      </div>
+
+      {p && (
+        <PaymentMethodDialog
+          open={chooserOpen}
+          onOpenChange={setChooserOpen}
+          gateways={gateways}
+          busy={busyGateway}
+          onChoose={(g) => void startCheckout(g)}
+        />
+      )}
     </>
   )
 }

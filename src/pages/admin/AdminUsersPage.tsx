@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Pagination } from "@/components/ui/pagination"
+import { ManageSubscriptionDialog } from "@/components/ManageSubscriptionDialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 type StatusFilter = "ALL" | "ACTIVE" | "DISABLED"
@@ -23,6 +24,7 @@ export function AdminUsersPage() {
   const [q, setQ] = useState("")
   const [query, setQuery] = useState("")
   const [page, setPage] = useState(0)
+  const [managing, setManaging] = useState<UserResponse | null>(null)
 
   const { data, loading, error, reload } = useApi(
     () =>
@@ -89,6 +91,7 @@ export function AdminUsersPage() {
                   <TableHead className="hidden sm:table-cell">Email</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Subscription</TableHead>
                   <TableHead className="text-right">Active</TableHead>
                 </TableRow>
               </TableHeader>
@@ -100,6 +103,13 @@ export function AdminUsersPage() {
                     <TableCell><Badge variant="secondary">{u.role}</Badge></TableCell>
                     <TableCell>
                       <Badge variant={u.enabled ? "default" : "destructive"}>{u.enabled ? "Active" : "Disabled"}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {u.role === "STUDENT" ? (
+                        <Button size="sm" variant="outline" onClick={() => setManaging(u)}>Manage</Button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                     <TableCell className="text-right">
                       {u.role === "ADMIN" ? (
@@ -121,6 +131,8 @@ export function AdminUsersPage() {
           <Pagination page={data.page} totalPages={data.totalPages} onPage={setPage} />
         </>
       )}
+
+      <ManageSubscriptionDialog student={managing} onClose={() => setManaging(null)} />
     </>
   )
 }
