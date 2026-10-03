@@ -244,6 +244,19 @@ export interface SubscriptionStatusResponse {
 export interface PaymentOptionsResponse {
   paystack: boolean
   squad: boolean
+  /** Squad's in-page pop-up can be used (otherwise we send the student to Squad's own page). */
+  squadInline?: boolean
+}
+
+/** What the browser needs to open Squad's in-page pop-up for a payment the server already recorded. */
+export interface SquadCheckoutSession {
+  reference: string
+  amountKobo: number
+  currency: string
+  email: string
+  customerName: string
+  publicKey: string
+  passCharge: boolean
 }
 
 /** Outcome of one gateway payment when the browser returns from checkout. */
