@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
-import { Calendar, FileQuestion, History, Loader2, Plus, Tag, Trash2, Upload } from "lucide-react"
+import { Calendar, FileQuestion, History, Loader2, Plus, Trash2, Upload } from "lucide-react"
 
 const selectCls =
   "h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs focus:outline-none focus:ring-2 focus:ring-ring/40"
@@ -25,13 +25,12 @@ export function RecallsListPage({ basePath }: { basePath: string }) {
   const navigate = useNavigate()
   const subjects = useSubjects()
   const confirm = useConfirm()
-  const [subjectId, setSubjectId] = useState<number | "">("")
   const [page, setPage] = useState(0)
   const { data, loading, error, reload } = useApi(
     () => api.get<PagedResponse<MockExamResponse>>("/recalls", {
-      params: { page, size: 12, subjectId: subjectId || undefined },
+      params: { page, size: 12 },
     }).then((r) => r.data),
-    [page, subjectId],
+    [page],
   )
   const emptyForm = { title: "", description: "", subjectId: 0 }
   const [open, setOpen] = useState(false)
@@ -98,17 +97,6 @@ export function RecallsListPage({ basePath }: { basePath: string }) {
         }
       />
 
-      {/* Filters — dropdowns */}
-      <div className="mb-6 max-w-xs">
-        <div>
-          <label className="mb-1 flex items-center gap-1 text-xs font-600 text-muted-foreground"><Tag className="size-3.5" /> Subject</label>
-          <select className={selectCls} value={subjectId} onChange={(e) => { setSubjectId(e.target.value ? Number(e.target.value) : ""); setPage(0) }}>
-            <option value="">All subjects</option>
-            {(subjects.data ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
-        </div>
-      </div>
-
       {loading ? <CenteredSpinner /> : error ? <ErrorState message={error} /> : !data || data.content.length === 0 ? (
         <EmptyState title="No recalls yet" description="Create a recall paper, then bulk-upload its past questions." />
       ) : (
@@ -128,11 +116,6 @@ export function RecallsListPage({ basePath }: { basePath: string }) {
                     </span>
                   </div>
                   <div className="mt-1 flex flex-wrap items-center gap-2">
-                    {m.subjectName && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-[10px] font-600 text-accent-foreground">
-                        <Tag className="size-3" /> {m.subjectName}
-                      </span>
-                    )}
                     {m.examYear && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-600 text-warning">
                         <Calendar className="size-3" /> {m.examYear}

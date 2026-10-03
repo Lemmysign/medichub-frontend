@@ -241,7 +241,7 @@ export function MockExamRunPage({
               <ClipboardList className="size-5" />
             </div>
             <div className="font-700 text-[10px] uppercase tracking-widest opacity-80">
-              {eyebrow}{summary?.subjectName ? ` · ${summary.subjectName}` : ""}{summary?.examYear ? ` · ${summary.examYear}` : ""}
+              {eyebrow}{summary?.examYear ? ` · ${summary.examYear}` : ""}
             </div>
             <h1 className="font-800 text-2xl tracking-tight">{summary?.title ?? "Exam"}</h1>
             {summary?.description && <p className="mt-2 text-sm opacity-90">{summary.description}</p>}

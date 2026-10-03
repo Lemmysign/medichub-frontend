@@ -1,23 +1,19 @@
 import { Link } from "react-router-dom"
 import { api } from "@/lib/api"
 import { useApi } from "@/hooks/useApi"
-import { useSubjects } from "@/hooks/useSubjects"
 import type { MockExamSummaryResponse, PagedResponse } from "@/lib/types"
 import { useState } from "react"
 import { PageHeader, StatCard, CenteredSpinner, ErrorState, EmptyState } from "@/components/common"
-import { SubjectFilter } from "@/pages/mock/MockExamsListPage"
 import { Pagination } from "@/components/ui/pagination"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ClipboardList, Clock, FileQuestion, Tag, Target, History, ChevronRight, TrendingUp, Trophy } from "lucide-react"
+import { ClipboardList, Clock, FileQuestion, Target, History, ChevronRight, TrendingUp, Trophy } from "lucide-react"
 
 export function StudentMockExamsPage() {
-  const subjects = useSubjects()
-  const [subjectId, setSubjectId] = useState<number | null>(null)
   const [page, setPage] = useState(0)
   const { data, loading, error } = useApi(
-    () => api.get<PagedResponse<MockExamSummaryResponse>>("/student/mock-exams", { params: { page, size: 15, subjectId: subjectId ?? undefined } }).then((r) => r.data),
-    [page, subjectId],
+    () => api.get<PagedResponse<MockExamSummaryResponse>>("/student/mock-exams", { params: { page, size: 15 } }).then((r) => r.data),
+    [page],
   )
 
   const mocks = data?.content ?? []
@@ -30,9 +26,7 @@ export function StudentMockExamsPage() {
 
   return (
     <>
-      <PageHeader title="Mock exam" description="Full, timed, auto-graded papers under exam conditions — filter by subject." />
-
-      <SubjectFilter subjects={subjects.data ?? []} value={subjectId} onChange={(v) => { setSubjectId(v); setPage(0) }} />
+      <PageHeader title="Mock exam" description="Full, timed, auto-graded papers under exam conditions." />
 
       {loading ? <CenteredSpinner /> : error ? <ErrorState message={error} /> : mocks.length === 0 ? (
         <EmptyState title="No mock exams available yet" description="Check back soon — new exams are added regularly." />
@@ -57,11 +51,6 @@ export function StudentMockExamsPage() {
                     <div className="min-w-[220px] flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="font-700">{m.title}</p>
-                        {m.subjectName && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-[10px] font-600 text-accent-foreground">
-                            <Tag className="size-3" /> {m.subjectName}
-                          </span>
-                        )}
                       </div>
                       <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1"><FileQuestion className="size-4" /> {m.questionCount} questions</span>

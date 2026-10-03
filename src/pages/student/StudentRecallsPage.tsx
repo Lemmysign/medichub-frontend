@@ -2,25 +2,19 @@ import { useState } from "react"
 import { Link } from "react-router-dom"
 import { api } from "@/lib/api"
 import { useApi } from "@/hooks/useApi"
-import { useSubjects } from "@/hooks/useSubjects"
 import type { PagedResponse, RecallSummaryResponse } from "@/lib/types"
 import { PageHeader, CenteredSpinner, ErrorState, EmptyState } from "@/components/common"
 import { Pagination } from "@/components/ui/pagination"
-import { ArrowUpRight, FileQuestion, History, Tag } from "lucide-react"
-
-const selectCls =
-  "h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs focus:outline-none focus:ring-2 focus:ring-ring/40"
+import { ArrowUpRight, FileQuestion, History } from "lucide-react"
 
 export function StudentRecallsPage() {
-  const subjects = useSubjects()
-  const [subjectId, setSubjectId] = useState<number | "">("")
   const [page, setPage] = useState(0)
 
   const { data, loading, error } = useApi(
     () => api.get<PagedResponse<RecallSummaryResponse>>("/student/recalls", {
-      params: { page, size: 12, subjectId: subjectId || undefined },
+      params: { page, size: 12 },
     }).then((r) => r.data),
-    [page, subjectId],
+    [page],
   )
   const papers = data?.content ?? []
 
@@ -31,19 +25,8 @@ export function StudentRecallsPage() {
         description="Past-question papers. Open one to read its questions, answers and explanations — no timing, no scoring."
       />
 
-      {/* Filters — dropdowns */}
-      <div className="mb-6 max-w-xs">
-        <div>
-          <label className="mb-1 flex items-center gap-1 text-xs font-600 text-muted-foreground"><Tag className="size-3.5" /> Subject</label>
-          <select className={selectCls} value={subjectId} onChange={(e) => { setSubjectId(e.target.value ? Number(e.target.value) : ""); setPage(0) }}>
-            <option value="">All subjects</option>
-            {(subjects.data ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
-        </div>
-      </div>
-
       {loading ? <CenteredSpinner /> : error ? <ErrorState message={error} /> : papers.length === 0 ? (
-        <EmptyState title="No recalls found" description="Try a different subject — or check back as more are added." />
+        <EmptyState title="No recalls found" description="Check back soon — more are added regularly." />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {papers.map((m) => (
@@ -67,12 +50,6 @@ export function StudentRecallsPage() {
               <h3 className="font-800 mt-3 line-clamp-2 leading-snug tracking-tight transition-colors group-hover:text-primary">
                 {m.title}
               </h3>
-
-              {m.subjectName && (
-                <span className="font-600 mt-2 inline-flex w-fit items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] text-primary">
-                  <Tag className="size-3" /> {m.subjectName}
-                </span>
-              )}
 
               <div className="mt-4 flex items-center justify-between border-t border-border/70 pt-3">
                 <span className="tabular flex items-center gap-1.5 text-xs text-muted-foreground">
