@@ -6,7 +6,7 @@ import type { McqQuestionResponse, PagedResponse } from "@/lib/types"
 import { CenteredSpinner, ErrorState, EmptyState } from "@/components/common"
 import { Pagination } from "@/components/ui/pagination"
 import { Card } from "@/components/ui/card"
-import { ArrowLeft, CheckCircle2, Lightbulb, ListChecks, Tag } from "lucide-react"
+import { ArrowLeft, CheckCircle2, Lightbulb, ListChecks } from "lucide-react"
 
 const LETTERS = "ABCDEFGHIJ"
 const PAGE_SIZE = 15
@@ -39,11 +39,6 @@ export function StudentMcqViewPage() {
           <div className="min-w-0">
             <h1 className="font-800 text-xl tracking-tight">{title}</h1>
             <div className="mt-1 flex flex-wrap items-center gap-2">
-              {first?.subjectName && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-[10px] font-600 text-accent-foreground">
-                  <Tag className="size-3" /> {first.subjectName}
-                </span>
-              )}
               {data && <span className="text-xs text-muted-foreground">{data.totalElements} question{data.totalElements === 1 ? "" : "s"}</span>}
             </div>
           </div>
