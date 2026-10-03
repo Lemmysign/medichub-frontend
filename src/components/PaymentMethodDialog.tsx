@@ -9,7 +9,7 @@ interface Props {
   onOpenChange: (open: boolean) => void
   /** Which gateways can be used right now. Both are always listed; one that can't be used is greyed out. */
   available: Record<Gateway, boolean>
-  /** The gateway whose checkout is being started right now (locks the dialog while we redirect). */
+  /** The gateway whose checkout is being started right now (shows a spinner on it and blocks a second click). */
   busy: Gateway | null
   onChoose: (gateway: Gateway) => void
 }
@@ -22,7 +22,8 @@ const OPTIONS: Record<Gateway, { title: string; Icon: typeof CreditCard; tile: s
 /** "Choose how to pay": the student always picks the gateway; one that isn't available yet is shown greyed out. */
 export function PaymentMethodDialog({ open, onOpenChange, available, busy, onChoose }: Props) {
   return (
-    <Dialog open={open} onOpenChange={(next) => { if (!busy) onOpenChange(next) }}>
+    // Always closable, even while a checkout is starting: a slow or stuck request must never trap the student.
+    <Dialog open={open} onOpenChange={onOpenChange}>
       {/* No description on purpose: the dialog is just a title and the choices — the student always picks. */}
       <DialogContent aria-describedby={undefined} className="gap-6 overflow-hidden rounded-2xl p-0 sm:max-w-sm">
         <div className="bg-gradient-to-b from-primary/10 to-transparent px-6 pt-8 pb-2">

@@ -182,7 +182,6 @@ function EditSettingsDialog({
     durationMinutes: mock.durationMinutes ?? 30,
     feedbackMode: mock.feedbackMode as FeedbackMode,
     subjectId: mock.subjectId ?? 0,
-    examYear: mock.examYear ?? new Date().getFullYear(),
   })
   const [saving, setSaving] = useState(false)
 
@@ -194,7 +193,8 @@ function EditSettingsDialog({
             title: form.title,
             description: form.description,
             subjectId: form.subjectId,
-            ...(hasYear ? { examYear: form.examYear } : {}),
+            // The year is no longer edited here; keep whatever an existing recall already has.
+            ...(hasYear && mock.examYear != null ? { examYear: mock.examYear } : {}),
           }
         : {
             title: form.title,
@@ -216,7 +216,7 @@ function EditSettingsDialog({
         <DialogHeader><DialogTitle>Edit {noun} settings</DialogTitle></DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2"><Label>Title</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
-          <div className={"grid gap-3 " + (hasYear ? "grid-cols-2" : "grid-cols-1")}>
+          <div className="grid grid-cols-1 gap-3">
             <div className="space-y-2">
               <Label>Subject</Label>
               <select
@@ -228,12 +228,6 @@ function EditSettingsDialog({
                 {(subjects.data ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
-            {hasYear && (
-              <div className="space-y-2">
-                <Label>Exam year</Label>
-                <Input type="number" min={1950} max={2100} value={form.examYear} onChange={(e) => setForm({ ...form, examYear: Number(e.target.value) })} />
-              </div>
-            )}
           </div>
           <div className="space-y-2"><Label>Description</Label><Textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
 
