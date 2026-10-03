@@ -2,7 +2,7 @@ import { NavLink } from "react-router-dom"
 import {
   LayoutDashboard, BookOpen, Library, ClipboardList, CreditCard,
   Settings, MessageSquare, Users, ChevronLeft, ChevronRight,
-  Activity, LogOut, History, Tags, UserCheck, ListChecks,
+  Activity, LogOut, History, Tags, UserCheck, ListChecks, Stethoscope,
 } from "lucide-react"
 import type { Role } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -24,6 +24,7 @@ function navItems(role: Role): NavItem[] {
       { to: "/student/mock-exams", label: "Mock exam", icon: <ClipboardList size={18} /> },
       { to: "/student/mcqs", label: "MCQs", icon: <ListChecks size={18} /> },
       { to: "/student/recalls", label: "Recalls", icon: <History size={18} /> },
+      { to: "/student/osce", label: "OSCE", icon: <Stethoscope size={18} /> },
       { to: "/student/subscription", label: "Subscription", icon: <CreditCard size={18} /> },
     ]
   }
