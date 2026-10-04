@@ -39,9 +39,6 @@ export function StudentMcqViewPage() {
           </div>
           <div className="min-w-0">
             <h1 className="font-800 text-xl tracking-tight">{title}</h1>
-            <div className="mt-1 flex flex-wrap items-center gap-2">
-              {data && <span className="text-xs text-muted-foreground">{data.totalElements} question{data.totalElements === 1 ? "" : "s"}</span>}
-            </div>
           </div>
         </div>
       </Card>

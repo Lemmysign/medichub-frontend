@@ -5,7 +5,7 @@ import { useApi } from "@/hooks/useApi"
 import type { McqSummaryResponse, PagedResponse } from "@/lib/types"
 import { PageHeader, CenteredSpinner, ErrorState, EmptyState, LoadingOverlay } from "@/components/common"
 import { Pagination } from "@/components/ui/pagination"
-import { ArrowUpRight, FileQuestion, ListChecks } from "lucide-react"
+import { ArrowUpRight, ListChecks } from "lucide-react"
 
 /** Student-side MCQs — view-only question bank. Every set is listed; students see no subject filter or subject label. */
 export function StudentMcqsPage() {
@@ -49,10 +49,7 @@ export function StudentMcqsPage() {
                 {m.title}
               </h3>
 
-              <div className="mt-4 flex items-center justify-between border-t border-border/70 pt-3">
-                <span className="tabular flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <FileQuestion className="size-3.5" /> {m.questionCount} question{m.questionCount === 1 ? "" : "s"}
-                </span>
+              <div className="mt-4 flex items-center justify-end border-t border-border/70 pt-3">
                 <span className="font-600 flex items-center gap-0.5 text-xs text-primary">
                   View
                   <ArrowUpRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />

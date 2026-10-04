@@ -45,7 +45,6 @@ export function StudentRecallViewPage() {
                   <Calendar className="size-3" /> {first.examYear}
                 </span>
               )}
-              {data && <span className="text-xs text-muted-foreground">{data.totalElements} question{data.totalElements === 1 ? "" : "s"}</span>}
             </div>
           </div>
         </div>
