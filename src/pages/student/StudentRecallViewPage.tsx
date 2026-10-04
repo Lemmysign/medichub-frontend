@@ -5,6 +5,7 @@ import { useApi } from "@/hooks/useApi"
 import type { PagedResponse, RecallQuestionResponse } from "@/lib/types"
 import { CenteredSpinner, ErrorState, EmptyState, LoadingOverlay } from "@/components/common"
 import { Pagination } from "@/components/ui/pagination"
+import { SubscriptionLocked } from "@/components/SubscriptionLocked"
 import { QuestionImage } from "@/components/QuestionImage"
 import { Card } from "@/components/ui/card"
 import { ArrowLeft, Calendar, CheckCircle2, History, Lightbulb } from "lucide-react"
@@ -15,7 +16,7 @@ const PAGE_SIZE = 15
 export function StudentRecallViewPage() {
   const { id } = useParams()
   const [page, setPage] = useState(0)
-  const { data, loading, refreshing, error, reload } = useApi(
+  const { data, loading, refreshing, error, errorStatus, reload } = useApi(
     () => api.get<PagedResponse<RecallQuestionResponse>>(`/student/recalls/${id}/questions`, {
       params: { page, size: PAGE_SIZE },
     }).then((r) => r.data),
@@ -50,7 +51,7 @@ export function StudentRecallViewPage() {
         </div>
       </Card>
 
-      {loading ? <CenteredSpinner /> : error ? <ErrorState message={error} onRetry={reload} /> : questions.length === 0 ? (
+      {loading ? <CenteredSpinner /> : errorStatus === 402 ? <SubscriptionLocked feature="recalls" /> : error ? <ErrorState message={error} onRetry={reload} /> : questions.length === 0 ? (
         <EmptyState title="No questions in this recall yet" />
       ) : (
         <LoadingOverlay active={refreshing} label="Loading questions…">

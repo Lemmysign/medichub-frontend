@@ -5,13 +5,14 @@ import { useApi } from "@/hooks/useApi"
 import type { McqSummaryResponse, PagedResponse } from "@/lib/types"
 import { PageHeader, CenteredSpinner, ErrorState, EmptyState, LoadingOverlay } from "@/components/common"
 import { Pagination } from "@/components/ui/pagination"
+import { SubscriptionLocked } from "@/components/SubscriptionLocked"
 import { ArrowUpRight, ListChecks } from "lucide-react"
 
 /** Student-side MCQs — view-only question bank. Every set is listed; students see no subject filter or subject label. */
 export function StudentMcqsPage() {
   const [page, setPage] = useState(0)
 
-  const { data, loading, refreshing, error, reload } = useApi(
+  const { data, loading, refreshing, error, errorStatus, reload } = useApi(
     () => api.get<PagedResponse<McqSummaryResponse>>("/student/mcqs", {
       params: { page, size: 12 },
     }).then((r) => r.data),
@@ -26,7 +27,7 @@ export function StudentMcqsPage() {
         description="Question sets to study. Open one to read its questions, answers and explanations — no timing, no scoring."
       />
 
-      {loading ? <CenteredSpinner /> : error ? <ErrorState message={error} onRetry={reload} /> : papers.length === 0 ? (
+      {loading ? <CenteredSpinner /> : errorStatus === 402 ? <SubscriptionLocked feature="mcqs" /> : error ? <ErrorState message={error} onRetry={reload} /> : papers.length === 0 ? (
         <EmptyState title="No MCQs found" description="Check back soon — more are added regularly." />
       ) : (
         <LoadingOverlay active={refreshing}>

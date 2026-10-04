@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import { toast } from "sonner"
-import { api, errorMessage } from "@/lib/api"
+import { api, errorMessage, httpStatus } from "@/lib/api"
 import { useApi } from "@/hooks/useApi"
 import type {
   AttemptDetailResponse,
@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { scrollAppToTop } from "@/lib/scroll"
 import { QuestionImage, preloadImages } from "@/components/QuestionImage"
+import { SubscriptionLocked } from "@/components/SubscriptionLocked"
 import {
   ArrowLeft, ArrowRight, CheckCircle2, ClipboardList, Clock, Flag, Lightbulb,
   Loader2, PauseCircle, Send, Target, Trophy, XCircle, AlertCircle,
@@ -107,6 +108,7 @@ export function MockExamRunPage({
   const [starting, setStarting] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [needsSubscription, setNeedsSubscription] = useState(false)
   // Questions whose answer is being checked by the server right now (study mode). The ref is the instant guard
   // against double clicks, the state drives the spinner.
   const [checking, setChecking] = useState<Set<number>>(new Set())
@@ -152,7 +154,8 @@ export function MockExamRunPage({
       setAnswers({}); setChecks({}); setFlags(new Set()); setCurrent(0)
       setPaused(false); setResult(null); setPhase("running")
     } catch (e) {
-      toast.error(errorMessage(e))
+      if (httpStatus(e) === 402) setNeedsSubscription(true)
+      else toast.error(errorMessage(e))
     } finally {
       setStarting(false)
     }
@@ -254,6 +257,17 @@ export function MockExamRunPage({
   }
 
   // ---------------------------------------------------------------- INTRO
+  if (phase === "intro" && (needsSubscription || list.errorStatus === 402 || attempts.errorStatus === 402)) {
+    return (
+      <div className="mx-auto max-w-4xl">
+        <Link to={backTo} className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="size-4" /> Back to {backLabel}
+        </Link>
+        <SubscriptionLocked feature="mock" />
+      </div>
+    )
+  }
+
   if (phase === "intro") {
     const introTimed = summary ? summary.durationMinutes != null : false
     const history = attempts.data?.content ?? []

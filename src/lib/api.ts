@@ -86,6 +86,11 @@ api.interceptors.response.use(
 )
 
 /** Extract a human-friendly message from an axios error. */
+/** HTTP status of a failed API call (402 = the student needs a subscription), or null if there was none. */
+export function httpStatus(err: unknown): number | null {
+  return (err as AxiosError).response?.status ?? null
+}
+
 export function errorMessage(err: unknown, fallback = "Something went wrong"): string {
   const ax = err as AxiosError<ApiError>
   const data = ax.response?.data
