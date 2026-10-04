@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type DependencyList } from "react"
-import { errorMessage } from "@/lib/api"
+import { errorMessage, httpStatus } from "@/lib/api"
 
 /**
  * Loads data and re-loads it when `deps` change.
@@ -13,6 +13,7 @@ export function useApi<T>(fetcher: () => Promise<T>, deps: DependencyList = []) 
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [errorStatus, setErrorStatus] = useState<number | null>(null)
   const hasData = useRef(false)
   const latest = useRef(0)
 
@@ -27,10 +28,12 @@ export function useApi<T>(fetcher: () => Promise<T>, deps: DependencyList = []) 
         setData(d)
         hasData.current = true
         setError(null)
+        setErrorStatus(null)
       })
       .catch((e) => {
         if (mine !== latest.current) return
         setError(errorMessage(e))
+        setErrorStatus(httpStatus(e))
       })
       .finally(() => {
         if (mine !== latest.current) return
@@ -43,5 +46,5 @@ export function useApi<T>(fetcher: () => Promise<T>, deps: DependencyList = []) 
     run()
   }, [run])
 
-  return { data, loading, refreshing, error, reload: run }
+  return { data, loading, refreshing, error, errorStatus, reload: run }
 }

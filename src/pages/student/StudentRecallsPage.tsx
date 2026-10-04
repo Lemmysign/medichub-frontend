@@ -5,12 +5,13 @@ import { useApi } from "@/hooks/useApi"
 import type { PagedResponse, RecallSummaryResponse } from "@/lib/types"
 import { PageHeader, CenteredSpinner, ErrorState, EmptyState, LoadingOverlay } from "@/components/common"
 import { Pagination } from "@/components/ui/pagination"
+import { SubscriptionLocked } from "@/components/SubscriptionLocked"
 import { ArrowUpRight, History } from "lucide-react"
 
 export function StudentRecallsPage() {
   const [page, setPage] = useState(0)
 
-  const { data, loading, refreshing, error, reload } = useApi(
+  const { data, loading, refreshing, error, errorStatus, reload } = useApi(
     () => api.get<PagedResponse<RecallSummaryResponse>>("/student/recalls", {
       params: { page, size: 12 },
     }).then((r) => r.data),
@@ -25,7 +26,7 @@ export function StudentRecallsPage() {
         description="Past-question papers. Open one to read its questions, answers and explanations — no timing, no scoring."
       />
 
-      {loading ? <CenteredSpinner /> : error ? <ErrorState message={error} onRetry={reload} /> : papers.length === 0 ? (
+      {loading ? <CenteredSpinner /> : errorStatus === 402 ? <SubscriptionLocked feature="recalls" /> : error ? <ErrorState message={error} onRetry={reload} /> : papers.length === 0 ? (
         <EmptyState title="No recalls found" description="Check back soon — more are added regularly." />
       ) : (
         <LoadingOverlay active={refreshing}>

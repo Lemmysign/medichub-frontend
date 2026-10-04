@@ -5,13 +5,14 @@ import type { MockExamSummaryResponse, PagedResponse } from "@/lib/types"
 import { useState } from "react"
 import { PageHeader, StatCard, CenteredSpinner, ErrorState, EmptyState, LoadingOverlay } from "@/components/common"
 import { Pagination } from "@/components/ui/pagination"
+import { SubscriptionLocked } from "@/components/SubscriptionLocked"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ClipboardList, Clock, FileQuestion, Target, History, ChevronRight, TrendingUp, Trophy } from "lucide-react"
 
 export function StudentMockExamsPage() {
   const [page, setPage] = useState(0)
-  const { data, loading, refreshing, error, reload } = useApi(
+  const { data, loading, refreshing, error, errorStatus, reload } = useApi(
     () => api.get<PagedResponse<MockExamSummaryResponse>>("/student/mock-exams", { params: { page, size: 15 } }).then((r) => r.data),
     [page],
   )
@@ -28,7 +29,7 @@ export function StudentMockExamsPage() {
     <>
       <PageHeader title="Mock exam" description="Full, timed, auto-graded papers under exam conditions." />
 
-      {loading ? <CenteredSpinner /> : error ? <ErrorState message={error} onRetry={reload} /> : mocks.length === 0 ? (
+      {loading ? <CenteredSpinner /> : errorStatus === 402 ? <SubscriptionLocked feature="mock" /> : error ? <ErrorState message={error} onRetry={reload} /> : mocks.length === 0 ? (
         <EmptyState title="No mock exams available yet" description="Check back soon — new exams are added regularly." />
       ) : (
         <>

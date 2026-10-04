@@ -125,9 +125,9 @@ export function CoursePlayerPage() {
         <Card className="mb-6 flex flex-wrap items-center justify-between gap-3 border-primary/30 bg-primary/5 p-5">
           <div className="flex items-center gap-2">
             <Lock className="size-4 text-primary" />
-            <span className="text-sm">An active subscription is required to watch videos and download materials.</span>
+            <span className="text-sm">Subscribe to watch the lessons and download the course materials.</span>
           </div>
-          <Button asChild size="sm"><Link to="/student/subscription">Subscribe</Link></Button>
+          <Button asChild size="sm"><Link to="/student/subscription">See subscription options</Link></Button>
         </Card>
       )}
 

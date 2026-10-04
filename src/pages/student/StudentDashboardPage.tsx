@@ -6,7 +6,7 @@ import type { EnrolledCourseResponse, PagedResponse, StudentDashboardResponse, S
 import { PageHeader, StatCard, CenteredSpinner, ErrorState } from "@/components/common"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { BookOpen, GraduationCap, Trophy, Percent, ArrowRight, Play, ClipboardList, AlertCircle, CheckCircle2 } from "lucide-react"
+import { BookOpen, GraduationCap, Trophy, Percent, ArrowRight, Play, ClipboardList, AlertCircle, CheckCircle2, Sparkles } from "lucide-react"
 
 export function StudentDashboardPage() {
   const { user } = useAuth()
@@ -49,14 +49,16 @@ export function StudentDashboardPage() {
           </Button>
         </Card>
       ) : (
-        <Card className="mb-6 flex flex-col gap-4 border-primary/30 bg-primary/5 p-5 sm:flex-row sm:items-center">
-          <AlertCircle className="size-5 shrink-0 text-primary" />
+        <Card className="mb-6 flex flex-col gap-4 overflow-hidden border-0 bg-gradient-to-br from-primary to-[#0e7a75] p-5 text-primary-foreground sm:flex-row sm:items-center">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white/15">
+            <Sparkles className="size-5" />
+          </span>
           <div className="flex-1">
-            <p className="font-700 text-sm">You don&apos;t have an active subscription</p>
-            <p className="text-xs text-muted-foreground">Subscribe to unlock every course, test, and material.</p>
+            <p className="font-800 text-base">Unlock your full MDCN preparation</p>
+            <p className="text-sm opacity-90">Subscribe to get every MCQ set, recall and mock exam, with a clear explanation behind each answer.</p>
           </div>
-          <Button asChild size="sm" className="shrink-0">
-            <Link to="/student/subscription">View plans</Link>
+          <Button asChild variant="secondary" size="sm" className="font-700 shrink-0">
+            <Link to="/student/subscription">See subscription options</Link>
           </Button>
         </Card>
       )}
