@@ -5,30 +5,38 @@ import { Card } from "@/components/ui/card"
 
 export type LockedFeature = "mcqs" | "recalls" | "mock"
 
-const COPY: Record<LockedFeature, { eyebrow: string; title: string; text: string }> = {
+const COPY: Record<LockedFeature, { eyebrow: string; title: string; text: string; bullets: string[] }> = {
   mcqs: {
     eyebrow: "MCQ bank",
     title: "Practise like the real exam. Pass with confidence.",
-    text: "Subscribe to unlock every MCQ set, with a clear explanation behind every answer.",
+    text: "Build speed and accuracy, one question at a time.",
+    bullets: [
+      "Question sets you can practise any time, on any device",
+      "Every answer explained, so you learn why",
+      "Go at your own pace and repeat as often as you like",
+    ],
   },
   recalls: {
     eyebrow: "Past-question recalls",
     title: "Study what candidates actually remember.",
-    text: "Subscribe to unlock real recalled questions, with the correct answers explained.",
+    text: "See the kind of questions that have really come up, before you sit the exam.",
+    bullets: [
+      "Real questions recalled from past sittings",
+      "The correct answer, explained",
+      "Picture-based questions included",
+    ],
   },
   mock: {
     eyebrow: "Mock exams",
     title: "Sit the exam before exam day.",
-    text: "Subscribe to unlock timed papers that mark themselves, then watch your score climb.",
+    text: "Find out where you stand while there is still time to improve.",
+    bullets: [
+      "Full timed papers that feel like the real thing",
+      "Marked instantly, with the correct answers shown",
+      "Every attempt saved, so you can watch your score climb",
+    ],
   },
 }
-
-const BENEFITS = [
-  "Every MCQ set, recall and mock exam",
-  "A clear explanation behind each answer",
-  "Timed papers marked for you instantly",
-  "Your scores and attempts saved, so you can see your progress",
-]
 
 /**
  * Shown instead of a red error when a student without an active subscription opens a subscriber-only section
@@ -47,7 +55,7 @@ export function SubscriptionLocked({ feature }: { feature: LockedFeature }) {
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">{c.text}</p>
 
           <ul className="mt-5 space-y-2.5">
-            {BENEFITS.map((b) => (
+            {c.bullets.map((b) => (
               <li key={b} className="flex items-start gap-2.5 text-sm">
                 <CheckCircle2 className="mt-0.5 size-[18px] shrink-0 text-success" />
                 <span>{b}</span>
@@ -62,7 +70,6 @@ export function SubscriptionLocked({ feature }: { feature: LockedFeature }) {
             <p className="mt-3 text-xs text-muted-foreground">
               Already paid by bank transfer? Your access starts once we confirm your payment.
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">Prepared by practising consultants and professional examiners.</p>
           </div>
         </div>
 
